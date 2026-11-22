@@ -1,0 +1,18 @@
+{% if ayuda %}
+<details class="ayuda" open>
+  <summary>Cómo se resuelve este método</summary>
+  <div class="ayuda__cuerpo">
+    <div class="ayuda__col">
+      <h4>Resumen</h4>
+      <p>{{ ayuda.resumen }}</p>
+      {% if ayuda.formula %}<p class="ayuda__formula">{{ ayuda.formula }}</p>{% endif %}
+      <h4>En la calculadora</h4>
+      <ol>{% for u in ayuda.uso %}<li>{{ u }}</li>{% endfor %}</ol>
+    </div>
+    <div class="ayuda__col">
+      <h4>Pasos para resolverlo</h4>
+      <ol>{% for p in ayuda.pasos %}<li>{{ p }}</li>{% endfor %}</ol>
+    </div>
+  </div>
+</details>
+{% endif %}

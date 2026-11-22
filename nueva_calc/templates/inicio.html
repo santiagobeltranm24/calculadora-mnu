@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block contenido %}
+<p class="etiqueta">panel principal</p>
+<h1>Elige un método</h1>
+<p class="descripcion">
+  Los temas están organizados por hitos. Entra a cada método para ver su
+  tabla de iteraciones o sus pasos y, en el Hito 2, la gráfica en GeoGebra.
+</p>
+
+{% for h in hitos %}
+{% include "parcial_hito.html" %}
+{% endfor %}
+{% endblock %}

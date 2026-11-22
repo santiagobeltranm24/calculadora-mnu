@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% block titulo %}{{ m.titulo }}{% endblock %}
+
+{% block contenido %}
+<p class="etiqueta">Hito {{ m.hito }} · sistemas lineales</p>
+<h1>{{ m.titulo }}</h1>
+<p class="descripcion">{{ m.descripcion }}</p>
+{% include "ayuda.html" %}
+
+<section class="bloque">
+  <div>
+    <form id="formulario">
+      <div class="controles-fila">
+        <div class="campo">
+          <label for="tamano">tamaño n (2–6)</label>
+          <input type="number" id="tamano" min="2" max="6" value="{{ m.ejemplo.A | length }}">
+        </div>
+      </div>
+
+      <div class="campo"><label>matriz A y vector b</label></div>
+      <div id="rejilla" class="rejilla-sistema"></div>
+
+      {% if m.iterativo %}
+      <div class="campo"><label>vector inicial x0</label></div>
+      <div id="vector0" class="fila-vector"></div>
+      <div class="controles-fila" style="margin-bottom:18px">
+        <div class="campo">
+          <label for="tol">tolerancia</label>
+          <input type="number" step="any" id="tol" value="0.0001">
+        </div>
+        <div class="campo">
+          <label for="iter_max">iteraciones máximas</label>
+          <input type="number" id="iter_max" value="50">
+        </div>
+      </div>
+      {% endif %}
+
+      <button type="submit" class="boton">Calcular</button>
+    </form>
+  </div>
+
+  <p id="estado" class="estado"></p>
+  <p id="aviso" class="estado estado--aviso"></p>
+  <p id="info" class="estado estado--info"></p>
+  <div id="solucion" class="dato-simple"></div>
+  <div id="detalle"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const RUTA = "/api/sistemas/{{ slug }}";
+const ITERATIVO = {{ m.iterativo | tojson }};
+const EJEMPLO = {{ m.ejemplo | tojson }};
+
+let datos = { A: EJEMPLO.A.map((f) => f.slice()), b: EJEMPLO.b.slice(), x0: [] };
+
+function leerRejilla() {
+  document.querySelectorAll("#rejilla .celda").forEach((c) => {
+    const i = Number(c.dataset.i);
+    const j = c.dataset.j;
+    if (!datos.A[i]) datos.A[i] = [];
+    if (j === "b") datos.b[i] = c.value;
+    else datos.A[i][Number(j)] = c.value;
+  });
+  document.querySelectorAll("#vector0 .celda").forEach((c) => {
+    datos.x0[Number(c.dataset.j)] = c.value;
+  });
+}
+
+function valorInicial(i, j) {
+  if (datos.A[i] && datos.A[i][j] !== undefined) return datos.A[i][j];
+  return i === j ? 1 : 0;
+}
+
+function crearCelda(i, j, valor) {
+  const input = document.createElement("input");
+  input.type = "number";
+  input.step = "any";
+  input.className = "celda";
+  input.dataset.i = i;
+  input.dataset.j = j;
+  input.value = valor;
+  return input;
+}
+
+function construirRejilla(n) {
+  const rejilla = document.getElementById("rejilla");
+  rejilla.innerHTML = "";
+  rejilla.style.gridTemplateColumns = `repeat(${n}, auto) 14px auto`;
+
+  for (let j = 0; j < n; j++) {
+    const r = document.createElement("div");
+    r.className = "rotulo";
+    r.textContent = `x${j + 1}`;
+    rejilla.appendChild(r);
+  }
+  rejilla.appendChild(document.createElement("div"));
+  const rb = document.createElement("div");
+  rb.className = "rotulo";
+  rb.textContent = "b";
+  rejilla.appendChild(rb);
+
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) rejilla.appendChild(crearCelda(i, j, valorInicial(i, j)));
+    const sep = document.createElement("div");
+    sep.className = "separador";
+    sep.textContent = "|";
+    rejilla.appendChild(sep);
+    const bi = datos.b[i] !== undefined ? datos.b[i] : 0;
+    rejilla.appendChild(crearCelda(i, "b", bi));
+  }
+
+  if (ITERATIVO) {
+    const cont = document.getElementById("vector0");
+    cont.innerHTML = "";
+    for (let j = 0; j < n; j++) {
+      const v = datos.x0[j] !== undefined ? datos.x0[j] : 0;
+      cont.appendChild(crearCelda(0, j, v));
+    }
+  }
+}
+
+function tamanoActual() {
+  const n = parseInt(document.getElementById("tamano").value, 10);
+  return Math.min(6, Math.max(2, isNaN(n) ? 2 : n));
+}
+
+document.getElementById("tamano").addEventListener("change", () => {
+  leerRejilla();
+  const n = tamanoActual();
+  document.getElementById("tamano").value = n;
+  construirRejilla(n);
+});
+
+construirRejilla(tamanoActual());
+
+function renderMatriz(paso, n) {
+  const tabla = document.createElement("table");
+  tabla.className = "matriz";
+  paso.matriz.forEach((fila, i) => {
+    const tr = document.createElement("tr");
+    fila.forEach((v, j) => {
+      const td = document.createElement("td");
+      td.textContent = formatearCorto(v);
+      if (j === n) td.classList.add("corte");
+      if (paso.pivote && paso.pivote[0] === i && paso.pivote[1] === j) td.classList.add("pivote");
+      tr.appendChild(td);
+    });
+    tabla.appendChild(tr);
+  });
+  return tabla;
+}
+
+function renderPasos(pasos, n, contenedor) {
+  pasos.forEach((paso) => {
+    const div = document.createElement("div");
+    div.className = "paso";
+    const h = document.createElement("h4");
+    h.textContent = paso.titulo;
+    div.appendChild(h);
+    div.appendChild(renderMatriz(paso, n));
+    contenedor.appendChild(div);
+  });
+}
+
+function renderIteraciones(tabla, n, contenedor) {
+  const envoltura = document.createElement("div");
+  envoltura.className = "tabla-envoltura";
+  const t = document.createElement("table");
+  t.className = "tabla";
+  const cab = ["n"];
+  for (let j = 0; j < n; j++) cab.push(`x${j + 1}`);
+  cab.push("error");
+  t.innerHTML = "<thead><tr>" + cab.map((c) => `<th>${c}</th>`).join("") + "</tr></thead>";
+  const cuerpo = document.createElement("tbody");
+  tabla.forEach((fila) => {
+    const tr = document.createElement("tr");
+    [fila.n, ...fila.valores, fila.error].forEach((v, idx) => {
+      const td = document.createElement("td");
+      td.textContent = idx === 0 ? String(v) : formatear(v);
+      tr.appendChild(td);
+    });
+    cuerpo.appendChild(tr);
+  });
+  t.appendChild(cuerpo);
+  envoltura.appendChild(t);
+  contenedor.appendChild(envoltura);
+}
+
+document.getElementById("formulario").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  leerRejilla();
+  const n = tamanoActual();
+
+  const A = [];
+  const b = [];
+  for (let i = 0; i < n; i++) {
+    A.push([]);
+    for (let j = 0; j < n; j++) A[i].push(parseFloat(datos.A[i][j]));
+    b.push(parseFloat(datos.b[i]));
+  }
+
+  const estado = document.getElementById("estado");
+  const aviso = document.getElementById("aviso");
+  const info = document.getElementById("info");
+  const solucion = document.getElementById("solucion");
+  const detalle = document.getElementById("detalle");
+  aviso.textContent = "";
+  info.textContent = "";
+  solucion.innerHTML = "";
+  detalle.innerHTML = "";
+
+  if (A.some((f) => f.some(isNaN)) || b.some(isNaN)) {
+    mostrarEstado(estado, "error", "error: completa todas las celdas con números");
+    return;
+  }
+
+  const cuerpo = { A, b };
+  if (ITERATIVO) {
+    cuerpo.x0 = Array.from({ length: n }, (_, j) => parseFloat(datos.x0[j]) || 0);
+    cuerpo.tol = document.getElementById("tol").value;
+    cuerpo.iter_max = document.getElementById("iter_max").value;
+  }
+
+  const r = await llamarApi(RUTA, cuerpo);
+  if (!r.ok) {
+    mostrarEstado(estado, "error", "error: " + r.mensaje);
+    return;
+  }
+
+  if (ITERATIVO) {
+    if (r.convergio) mostrarEstado(estado, "ok", `convergió en ${r.iteraciones} iteraciones`);
+    else mostrarEstado(estado, "error", `no convergió en ${r.iteraciones} iteraciones`);
+  } else {
+    mostrarEstado(estado, "ok", "sistema resuelto");
+  }
+  aviso.textContent = r.aviso ? "aviso: " + r.aviso : "";
+  info.textContent = r.info || "";
+
+  r.solucion.forEach((v, j) => {
+    const d = document.createElement("div");
+    d.innerHTML = `<span>x${j + 1}</span><strong>${v.toFixed(6)}</strong>`;
+    solucion.appendChild(d);
+  });
+  const dr = document.createElement("div");
+  dr.innerHTML = `<span>residuo máx |Ax − b|</span><strong>${formatear(r.residuo)}</strong>`;
+  solucion.appendChild(dr);
+
+  if (ITERATIVO) renderIteraciones(r.tabla, n, detalle);
+  else renderPasos(r.pasos, n, detalle);
+
+});
+</script>
+{% endblock %}

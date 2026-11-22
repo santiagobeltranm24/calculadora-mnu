@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block titulo %}{{ hito.nombre }}{% endblock %}
+
+{% block contenido %}
+{% set h = hito %}
+{% include "parcial_hito.html" %}
+{% endblock %}

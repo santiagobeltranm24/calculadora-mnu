@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block titulo %}Métodos numéricos{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+</head>
+<body>
+<nav class="menu">
+  <div class="menu__grupo">
+    <a href="/" class="menu__enlace {{ 'activa' if seccion=='inicio' else '' }}">Inicio</a>
+  </div>
+  {% for h in hitos %}
+  <div class="menu__hito">
+    <a href="{{ h.ruta }}" class="menu__hito-titulo {{ 'activa' if seccion == 'hito' ~ h.numero else '' }}">
+      <span class="menu__hito-num">{{ h.numero }}</span>{{ h.nombre }}
+    </a>
+    {% for sec in h.secciones %}
+    <div class="menu__grupo">
+      <p class="menu__titulo">{{ sec.nombre }}</p>
+      {% for item in sec['items'] %}
+      <a href="{{ item.ruta }}" class="menu__enlace {{ 'activa' if seccion==item.slug else '' }}">{{ item.titulo }}</a>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</nav>
+<main class="principal">
+  {% block contenido %}{% endblock %}
+</main>
+{% block librerias %}{% endblock %}
+<script src="{{ url_for('static', filename='js/nucleo.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

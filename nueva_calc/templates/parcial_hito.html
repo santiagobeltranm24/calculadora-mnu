@@ -1,0 +1,20 @@
+<section class="hito-bloque">
+  <div class="hito-cabecera">
+    <span class="hito-numero">{{ h.numero }}</span>
+    <div>
+      <h2 class="hito-nombre">{{ h.nombre }}</h2>
+      <p class="hito-resumen">{{ h.resumen }}</p>
+    </div>
+  </div>
+  {% for sec in h.secciones %}
+  <h3 class="grupo-titulo">{{ sec.nombre }}</h3>
+  <div class="rejilla-inicio">
+    {% for item in sec['items'] %}
+    <a href="{{ item.ruta }}" class="tarjeta">
+      <h3>{{ item.titulo }}</h3>
+      <p>{{ item.resumen }}</p>
+    </a>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</section>

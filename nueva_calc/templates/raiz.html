@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block titulo %}{{ m.titulo }}{% endblock %}
+
+{% block contenido %}
+<p class="etiqueta">Hito {{ m.hito }} · raíces de ecuaciones</p>
+<h1>{{ m.titulo }}</h1>
+<p class="descripcion">{{ m.descripcion }}</p>
+{% include "ayuda.html" %}
+
+<section class="bloque">
+  {% if m.grafica %}
+  <div class="panel-doble">
+  {% endif %}
+    <form id="formulario" class="{{ 'formulario-linea' if not m.grafica else '' }}">
+      {% for c in m.campos %}
+      <div class="campo {{ 'campo--ancho' if c.texto and not m.grafica else '' }}">
+        <label for="{{ c.nombre }}">{{ c.etiqueta }}</label>
+        <input id="{{ c.nombre }}" name="{{ c.nombre }}" value="{{ c.valor }}"
+               {% if c.texto %}type="text"{% else %}type="number" step="any"{% endif %}>
+      </div>
+      {% endfor %}
+      <div class="campo campo--boton">
+        <button type="submit" class="boton">Calcular</button>
+      </div>
+    </form>
+    {% if m.grafica %}
+    <div id="ggb" class="pantalla"></div>
+  </div>
+  {% endif %}
+
+  <p id="estado" class="estado"></p>
+  <p id="aviso" class="estado estado--aviso"></p>
+  <p id="info" class="estado estado--info"></p>
+  <div id="resumen" class="dato-simple"></div>
+
+  <div class="tabla-envoltura">
+    <table class="tabla">
+      <thead>
+        <tr>{% for col in m.columnas %}<th>{{ col[1] }}</th>{% endfor %}</tr>
+      </thead>
+      <tbody id="cuerpo"></tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
+
+{% block librerias %}
+{% if m.grafica %}<script src="https://www.geogebra.org/apps/deployggb.js"></script>{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CLAVES = {{ m.columnas | map('first') | list | tojson }};
+const NOMBRE_GGB = {{ m.ggb | tojson }};
+const GRAFICA = {{ m.grafica | tojson }};
+const RUTA = "/api/raices/{{ slug }}";
+
+if (GRAFICA) montarGraficadora("ggb");
+
+document.getElementById("formulario").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const cuerpo = {};
+  new FormData(e.target).forEach((valor, clave) => { cuerpo[clave] = valor; });
+
+  const r = await llamarApi(RUTA, cuerpo);
+  const estado = document.getElementById("estado");
+  const aviso = document.getElementById("aviso");
+  const info = document.getElementById("info");
+  const resumen = document.getElementById("resumen");
+  const tbody = document.getElementById("cuerpo");
+  tbody.innerHTML = "";
+  resumen.innerHTML = "";
+  aviso.textContent = "";
+  info.textContent = "";
+
+  if (!r.ok) {
+    mostrarEstado(estado, "error", "error: " + r.mensaje);
+    return;
+  }
+
+  r.tabla.forEach((fila) => {
+    const tr = document.createElement("tr");
+    CLAVES.forEach((clave) => {
+      const td = document.createElement("td");
+      td.textContent = formatear(fila[clave], clave);
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+
+  if (r.convergio) {
+    mostrarEstado(estado, "ok", `convergió en ${r.iteraciones} iteraciones`);
+  } else {
+    mostrarEstado(estado, "error", `no convergió en ${r.iteraciones} iteraciones`);
+  }
+  aviso.textContent = r.aviso ? "aviso: " + r.aviso : "";
+  info.textContent = r.info || "";
+
+  const ultima = r.tabla.length ? r.tabla[r.tabla.length - 1] : null;
+  const errorFinal = ultima ? formatear(ultima.error, "error") : "—";
+  resumen.innerHTML = `
+    <div><span>raíz aproximada</span><strong>${r.raiz.toFixed(6)}</strong></div>
+    <div><span>iteraciones</span><strong>${r.iteraciones}</strong></div>
+    <div><span>error final</span><strong>${errorFinal}</strong></div>
+  `;
+
+  if (GRAFICA) graficarFuncion(r.expresion_ggb, r.puntos, NOMBRE_GGB, r.extras);
+});
+</script>
+{% endblock %}

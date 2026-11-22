@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block titulo %}Errores de redondeo{% endblock %}
+
+{% block contenido %}
+<p class="etiqueta">Hito 2 · aproximación</p>
+<h1>Errores de redondeo</h1>
+<p class="descripcion">
+  Conversión de un entero decimal a otra base, cálculo de error entre
+  un valor real y uno aproximado, y propagación de ese error al
+  evaluar una función.
+</p>
+{% include "ayuda.html" %}
+
+<section class="bloque">
+  <h3>Conversión de base</h3>
+  <p class="nota">Divisiones sucesivas: el residuo de cada división es el dígito en la nueva base.</p>
+  <form id="f-base">
+    <div class="campo">
+      <label for="numero">número decimal</label>
+      <input type="number" id="numero" value="47" required>
+    </div>
+    <div class="campo">
+      <label for="base">base destino (2–16)</label>
+      <input type="number" id="base" value="2" min="2" max="16" required>
+    </div>
+    <button type="submit" class="boton">convertir</button>
+  </form>
+  <p id="msg-base" class="estado"></p>
+  <div id="res-base" class="dato-simple"></div>
+</section>
+
+<section class="bloque">
+  <h3>Comparación de valores</h3>
+  <p class="nota">EA = |real − aprox|, ER = EA / |real|, EP = ER × 100.</p>
+  <form id="f-comparar">
+    <div class="campo">
+      <label for="real">valor real</label>
+      <input type="number" step="any" id="real" value="3.14159265" required>
+    </div>
+    <div class="campo">
+      <label for="aprox">valor aproximado</label>
+      <input type="number" step="any" id="aprox" value="3.14" required>
+    </div>
+    <button type="submit" class="boton">calcular</button>
+  </form>
+  <p id="msg-comparar" class="estado"></p>
+  <div id="res-comparar" class="dato-simple"></div>
+</section>
+
+<section class="bloque">
+  <h3>Error propagado en f(x)</h3>
+  <p class="nota">Aplica la misma teoría a f(p) contra f(p*), y estima EA_f(p) ≈ |f'(p)| · EA_p.</p>
+  <form id="f-funcion">
+    <div class="campo">
+      <label for="fx">f(x)</label>
+      <input type="text" id="fx" value="sqrt(x)" required>
+    </div>
+    <div class="campo">
+      <label for="p-real">p (real)</label>
+      <input type="number" step="any" id="p-real" value="4" required>
+    </div>
+    <div class="campo">
+      <label for="p-aprox">p* (aproximado)</label>
+      <input type="number" step="any" id="p-aprox" value="4.002" required>
+    </div>
+    <button type="submit" class="boton">calcular</button>
+  </form>
+  <p id="msg-funcion" class="estado"></p>
+  <div id="res-funcion" class="dato-simple"></div>
+  <p id="nota-funcion" class="estado"></p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("f-base").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const r = await llamarApi("/api/base", {
+    numero: document.getElementById("numero").value,
+    base: document.getElementById("base").value,
+  });
+  const msg = document.getElementById("msg-base");
+  const res = document.getElementById("res-base");
+  if (!r.ok) {
+    msg.className = "estado estado--error";
+    msg.textContent = "error: " + r.mensaje;
+    res.innerHTML = "";
+    return;
+  }
+  msg.className = "estado estado--ok";
+  msg.textContent = "conversión realizada";
+  res.innerHTML = `<div><span>resultado</span><strong>${r.convertido}</strong></div>`;
+});
+
+document.getElementById("f-comparar").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const r = await llamarApi("/api/comparar", {
+    real: document.getElementById("real").value,
+    aprox: document.getElementById("aprox").value,
+  });
+  const msg = document.getElementById("msg-comparar");
+  const res = document.getElementById("res-comparar");
+  if (!r.ok) {
+    msg.className = "estado estado--error";
+    msg.textContent = "error: " + r.mensaje;
+    res.innerHTML = "";
+    return;
+  }
+  msg.className = "estado estado--ok";
+  msg.textContent = "cálculo realizado";
+  res.innerHTML = `
+    <div><span>error absoluto</span><strong>${r.ea.toFixed(6)}</strong></div>
+    <div><span>error relativo</span><strong>${r.er.toFixed(8)}</strong></div>
+    <div><span>error porcentual</span><strong>${r.ep.toFixed(4)}%</strong></div>
+    <div><span>cifras significativas</span><strong>${r.cifras}</strong></div>
+  `;
+});
+
+document.getElementById("f-funcion").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const r = await llamarApi("/api/error-funcion", {
+    f: document.getElementById("fx").value,
+    real: document.getElementById("p-real").value,
+    aprox: document.getElementById("p-aprox").value,
+  });
+  const msg = document.getElementById("msg-funcion");
+  const res = document.getElementById("res-funcion");
+  const nota = document.getElementById("nota-funcion");
+  if (!r.ok) {
+    msg.className = "estado estado--error";
+    msg.textContent = "error: " + r.mensaje;
+    res.innerHTML = "";
+    nota.textContent = "";
+    return;
+  }
+  msg.className = "estado estado--ok";
+  msg.textContent = "cálculo realizado";
+  res.innerHTML = `
+    <div><span>f(p)</span><strong>${r.f_real.toFixed(6)}</strong></div>
+    <div><span>f(p*)</span><strong>${r.f_aprox.toFixed(6)}</strong></div>
+    <div><span>error absoluto</span><strong>${r.ea.toFixed(8)}</strong></div>
+    <div><span>error relativo</span><strong>${r.er.toFixed(8)}</strong></div>
+    <div><span>error porcentual</span><strong>${r.ep.toFixed(4)}%</strong></div>
+    <div><span>cifras significativas</span><strong>${r.cifras}</strong></div>
+    <div><span>EA estimado con f'(p)</span><strong>${r.ea_estimado.toFixed(8)}</strong></div>
+  `;
+  nota.textContent = `f'(x) = ${r.derivada_txt}   →   f'(p) = ${r.pendiente.toFixed(6)}`;
+});
+</script>
+{% endblock %}

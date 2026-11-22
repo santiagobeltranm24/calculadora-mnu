@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block titulo %}{{ m.titulo }}{% endblock %}
+
+{% block contenido %}
+<p class="etiqueta">Hito {{ m.hito }} · {{ m.seccion | lower }}</p>
+<h1>{{ m.titulo }}</h1>
+<p class="descripcion">{{ m.descripcion }}</p>
+{% include "ayuda.html" %}
+
+<section class="bloque">
+  <form id="formulario">
+    {% if m.datos %}
+    <div class="campo"><label>{{ m.datos.titulo }}</label></div>
+    <div id="datos" class="datos-editor"></div>
+    <div class="controles-fila controles-datos">
+      <button type="button" id="mas" class="boton-suave">+ fila</button>
+      <button type="button" id="menos" class="boton-suave">− fila</button>
+    </div>
+    {% endif %}
+
+    <div class="formulario-linea">
+      {% for c in m.campos %}
+      <div class="campo {{ 'campo--ancho' if c.texto else '' }}">
+        <label for="{{ c.nombre }}">{{ c.etiqueta }}</label>
+        {% if c.opciones %}
+        <select id="{{ c.nombre }}" name="{{ c.nombre }}">
+          {% for valor, etiqueta in c.opciones %}<option value="{{ valor }}">{{ etiqueta }}</option>{% endfor %}
+        </select>
+        {% else %}
+        <input id="{{ c.nombre }}" name="{{ c.nombre }}" value="{{ c.valor }}"
+               {% if c.texto %}type="text"{% else %}type="number" step="any"{% endif %}>
+        {% endif %}
+      </div>
+      {% endfor %}
+      <div class="campo campo--boton">
+        <button type="submit" class="boton">Calcular</button>
+      </div>
+    </div>
+  </form>
+
+  <p id="estado" class="estado"></p>
+  <p id="aviso" class="estado estado--aviso"></p>
+  <p id="info" class="estado estado--info"></p>
+  <div id="resultados" class="dato-simple"></div>
+  <div id="tablas"></div>
+  <div id="pasos"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const RUTA = "/api/generico/{{ slug }}";
+const DATOS = {{ m.datos | tojson }};
+
+function celdaDato(valor) {
+  const input = document.createElement("input");
+  input.type = "number";
+  input.step = "any";
+  input.className = "celda";
+  input.value = valor;
+  return input;
+}
+
+function agregarFila(valores) {
+  const editor = document.getElementById("datos");
+  const indice = editor.querySelectorAll(".fila-dato").length + 1;
+  const fila = document.createElement("div");
+  fila.className = "fila-dato";
+  if (DATOS.indice) {
+    const rotulo = document.createElement("span");
+    rotulo.className = "rotulo-fila";
+    rotulo.textContent = `t = ${indice}`;
+    fila.appendChild(rotulo);
+  }
+  DATOS.columnas.forEach((_, j) => fila.appendChild(celdaDato(valores[j] !== undefined ? valores[j] : "")));
+  editor.appendChild(fila);
+}
+
+function construirEditor() {
+  const editor = document.getElementById("datos");
+  editor.style.setProperty("--columnas", DATOS.columnas.length);
+  if (DATOS.indice) editor.classList.add("con-indice");
+
+  const cabecera = document.createElement("div");
+  cabecera.className = "fila-dato fila-cabecera";
+  if (DATOS.indice) cabecera.appendChild(document.createElement("span"));
+  DATOS.columnas.forEach((nombre) => {
+    const e = document.createElement("span");
+    e.className = "rotulo";
+    e.textContent = nombre;
+    cabecera.appendChild(e);
+  });
+  editor.appendChild(cabecera);
+
+  DATOS.filas.forEach((fila) => agregarFila(fila));
+
+  document.getElementById("mas").addEventListener("click", () => agregarFila([]));
+  document.getElementById("menos").addEventListener("click", () => {
+    const filas = editor.querySelectorAll(".fila-dato:not(.fila-cabecera)");
+    if (filas.length > DATOS.minimo) filas[filas.length - 1].remove();
+  });
+}
+
+function leerFilas() {
+  const filas = [];
+  document.querySelectorAll("#datos .fila-dato:not(.fila-cabecera)").forEach((fila) => {
+    filas.push(Array.from(fila.querySelectorAll("input")).map((i) => i.value));
+  });
+  return filas;
+}
+
+function renderTabla(tabla, contenedor) {
+  const bloque = document.createElement("div");
+  bloque.className = "paso";
+  const h = document.createElement("h4");
+  h.textContent = tabla.titulo;
+  bloque.appendChild(h);
+
+  const envoltura = document.createElement("div");
+  envoltura.className = "tabla-envoltura";
+  const t = document.createElement("table");
+  t.className = "tabla";
+  const thead = document.createElement("thead");
+  const trh = document.createElement("tr");
+  tabla.columnas.forEach((c) => {
+    const th = document.createElement("th");
+    th.textContent = c;
+    trh.appendChild(th);
+  });
+  thead.appendChild(trh);
+  t.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  tabla.filas.forEach((fila) => {
+    const tr = document.createElement("tr");
+    fila.forEach((v) => {
+      const td = document.createElement("td");
+      td.textContent = v === null || v === undefined ? "—" : String(v);
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  t.appendChild(tbody);
+  envoltura.appendChild(t);
+  bloque.appendChild(envoltura);
+  contenedor.appendChild(bloque);
+}
+
+function renderPasos(pasos, contenedor) {
+  pasos.forEach((paso) => {
+    const div = document.createElement("div");
+    div.className = "paso";
+    const h = document.createElement("h4");
+    h.textContent = paso.titulo;
+    const p = document.createElement("p");
+    p.className = "paso-texto";
+    p.textContent = paso.detalle;
+    div.appendChild(h);
+    div.appendChild(p);
+    contenedor.appendChild(div);
+  });
+}
+
+if (DATOS) construirEditor();
+
+document.getElementById("formulario").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const cuerpo = {};
+  new FormData(e.target).forEach((valor, clave) => { cuerpo[clave] = valor; });
+  if (DATOS) cuerpo.puntos = leerFilas();
+
+  const estado = document.getElementById("estado");
+  const aviso = document.getElementById("aviso");
+  const info = document.getElementById("info");
+  const resultados = document.getElementById("resultados");
+  const tablas = document.getElementById("tablas");
+  const pasos = document.getElementById("pasos");
+  aviso.textContent = "";
+  info.textContent = "";
+  resultados.innerHTML = "";
+  tablas.innerHTML = "";
+  pasos.innerHTML = "";
+
+  const r = await llamarApi(RUTA, cuerpo);
+  if (!r.ok) {
+    mostrarEstado(estado, "error", "error: " + r.mensaje);
+    return;
+  }
+
+  mostrarEstado(estado, "ok", "cálculo realizado");
+  aviso.textContent = r.aviso ? "aviso: " + r.aviso : "";
+  info.textContent = r.info || "";
+
+  r.resultados.forEach(([etiqueta, valor]) => {
+    const d = document.createElement("div");
+    const s = document.createElement("span");
+    const f = document.createElement("strong");
+    s.textContent = etiqueta;
+    f.textContent = valor;
+    d.appendChild(s);
+    d.appendChild(f);
+    resultados.appendChild(d);
+  });
+
+  r.tablas.forEach((t) => renderTabla(t, tablas));
+  renderPasos(r.pasos, pasos);
+});
+</script>
+{% endblock %}
