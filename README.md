@@ -69,7 +69,7 @@ Se recomienda Python 3.10 o superior.
    **Windows**
    ```powershell
    py -m venv .venv
-   .venv\\Scripts\\Activate.ps1
+   .venv\Scripts\Activate.ps1
    ```
 
    **Linux / macOS**
