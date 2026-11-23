@@ -3,7 +3,7 @@ from flask import Flask, jsonify, render_template, request, abort
 from metodos import (
     redondeo, punto_fijo, newton, newton2,
     biseccion, falsa_posicion, secante, lineales,
-    aproximacion, interpolacion, proyecciones,
+    aproximacion, interpolacion, proyecciones, graficas,
 )
 from metodos.ayuda import AYUDA
 
@@ -439,7 +439,15 @@ def api_generico(slug):
     if config is None:
         abort(404)
     cuerpo = request.get_json(force=True)
-    return respuesta_api(lambda: config["funcion"](cuerpo))
+    def ejecutar():
+        resultado = config["funcion"](cuerpo)
+        if config["hito"] == 4:
+            try:
+                resultado["graficas"] = graficas.construir(slug, cuerpo, resultado)
+            except (ValueError, OverflowError, ZeroDivisionError, TypeError):
+                resultado["graficas"] = []
+        return resultado
+    return respuesta_api(ejecutar)
 
 
 @app.route("/api/base", methods=["POST"])

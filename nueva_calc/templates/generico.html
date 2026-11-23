@@ -42,6 +42,7 @@
   <p id="aviso" class="estado estado--aviso"></p>
   <p id="info" class="estado estado--info"></p>
   <div id="resultados" class="dato-simple"></div>
+  <div id="graficas"></div>
   <div id="tablas"></div>
   <div id="pasos"></div>
 </section>
@@ -180,6 +181,7 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
   resultados.innerHTML = "";
   tablas.innerHTML = "";
   pasos.innerHTML = "";
+  mostrarGraficas([], document.getElementById("graficas"));
 
   const r = await llamarApi(RUTA, cuerpo);
   if (!r.ok) {
@@ -202,6 +204,7 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
     resultados.appendChild(d);
   });
 
+  mostrarGraficas(r.graficas, document.getElementById("graficas"));
   r.tablas.forEach((t) => renderTabla(t, tablas));
   renderPasos(r.pasos, pasos);
 });

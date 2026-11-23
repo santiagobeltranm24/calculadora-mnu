@@ -43,6 +43,7 @@
   <p id="aviso" class="estado estado--aviso"></p>
   <p id="info" class="estado estado--info"></p>
   <div id="solucion" class="dato-simple"></div>
+  <div id="graficas"></div>
   <div id="detalle"></div>
 </section>
 {% endblock %}
@@ -210,6 +211,7 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
   info.textContent = "";
   solucion.innerHTML = "";
   detalle.innerHTML = "";
+  mostrarGraficas([], document.getElementById("graficas"));
 
   if (A.some((f) => f.some(isNaN)) || b.some(isNaN)) {
     mostrarEstado(estado, "error", "error: completa todas las celdas con números");
@@ -247,6 +249,16 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
   dr.innerHTML = `<span>residuo máx |Ax − b|</span><strong>${formatear(r.residuo)}</strong>`;
   solucion.appendChild(dr);
 
+  if (ITERATIVO && {{ m.hito }} === 4 && r.tabla) {
+    const graficas = [{
+      titulo: "Evolución del error por iteración", eje_x: "Iteración", eje_y: "Error absoluto máximo",
+      series: [{ nombre: "Error", tipo: "linea", puntos: r.tabla.map(f => [f.n, f.error]) }]
+    }, {
+      titulo: "Evolución de las incógnitas", eje_x: "Iteración", eje_y: "Valor aproximado",
+      series: Array.from({length: n}, (_, j) => ({nombre: `x${j+1}`, tipo: "linea", puntos: r.tabla.map(f => [f.n, f.valores[j]])}))
+    }];
+    mostrarGraficas(graficas, document.getElementById("graficas"));
+  }
   if (ITERATIVO) renderIteraciones(r.tabla, n, detalle);
   else renderPasos(r.pasos, n, detalle);
 

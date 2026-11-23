@@ -799,3 +799,13 @@ table.matriz td.pivote {
   .hito-cabecera { flex-direction: column; align-items: flex-start; padding: 20px; }
   .bloque { padding: 22px 18px; border-radius: 18px; }
 }
+
+/* Visualizaciones Hito 4 */
+#graficas{display:block}
+.grafica-tarjeta{margin:22px 0;padding:18px;background:rgba(8,7,20,.35);border:1px solid var(--borde);border-radius:14px;min-width:0}
+.grafica-tarjeta h3{font-size:1rem;margin:0 0 14px;color:var(--texto)}
+.grafica-leyenda{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;color:var(--texto);font-size:.76rem}
+.grafica-leyenda span{display:inline-flex;align-items:center;gap:7px}
+.grafica-leyenda i{width:11px;height:11px;border-radius:50%;display:inline-block}
+.grafica-marco{width:100%;overflow-x:auto}
+.grafica-marco svg{display:block;width:100%;min-width:420px;height:auto}
