@@ -109,7 +109,12 @@ def newton_adelante(cuerpo):
             {"titulo": "Tabla de diferencias finitas", "columnas": cabecera, "filas": filas_dif},
             {"titulo": "Términos de la fórmula", "columnas": ["k", "Δ^k y0", "s(s−1)…(s−k+1) / k!", "término", "suma parcial"], "filas": filas_terminos},
         ],
-        "pasos": [{"titulo": "Fórmula", "detalle": "P(x) = y0 + s·Δy0 + s(s−1)/2!·Δ²y0 + s(s−1)(s−2)/3!·Δ³y0 + …"}],
+        "pasos": [
+            {"titulo": "Paso 1. Separación uniforme", "detalle": f"h = x1 − x0 = {f6(xs[1])} − {f6(xs[0])} = {f6(h)}"},
+            {"titulo": "Paso 2. Variable normalizada", "detalle": f"s = (x − x0) / h = ({f6(x)} − {f6(xs[0])}) / {f6(h)} = {f6(s)}"},
+            {"titulo": "Paso 3. Diferencias finitas", "detalle": "Cada columna Δ^k se forma restando valores consecutivos de la columna anterior. Los resultados completos están en la tabla."},
+            {"titulo": "Paso 4. Suma de términos", "detalle": "P(x) = y0 + s·Δy0 + s(s−1)/2!·Δ²y0 + ...; la tabla muestra cada término y suma parcial."},
+        ],
         "aviso": _fuera_de_rango(xs, x),
         "info": "Requiere x igualmente espaciados; es más preciso cuando x está cerca del inicio de la tabla.",
     }
@@ -205,7 +210,12 @@ def diferencias_divididas(cuerpo):
             {"titulo": "Tabla de diferencias divididas", "columnas": cabecera, "filas": filas_dif},
             {"titulo": "Evaluación del polinomio de Newton", "columnas": ["k", "coeficiente", "(x−x0)…(x−x_(k−1))", "término", "suma parcial"], "filas": filas_terminos},
         ],
-        "pasos": [{"titulo": "Polinomio resultante", "detalle": f"P(x) = {polinomio_texto(np.atleast_1d(polinomio).tolist())}"}],
+        "pasos": [
+            {"titulo": "Paso 1. Diferencias divididas", "detalle": "f[x_i,...,x_(i+k)] = (f[x_(i+1),...,x_(i+k)] − f[x_i,...,x_(i+k−1)]) / (x_(i+k)−x_i). Revisa la tabla triangular."},
+            {"titulo": "Paso 2. Coeficientes", "detalle": "Coeficientes por orden: " + ", ".join(f"c{k}={f6(v)}" for k, v in enumerate(coeficientes))},
+            {"titulo": "Paso 3. Términos y sumas parciales", "detalle": "P(x) = c0 + c1(x−x0) + c2(x−x0)(x−x1) + ...; la segunda tabla muestra cada multiplicación."},
+            {"titulo": "Paso 4. Polinomio resultante", "detalle": f"P(x) = {polinomio_texto(np.atleast_1d(polinomio).tolist())}"},
+        ],
         "aviso": _fuera_de_rango(xs, x),
         "info": "Los coeficientes son la primera fila de la tabla: f[x0], f[x0,x1], f[x0,x1,x2], …",
     }

@@ -44,6 +44,7 @@
   <p id="info" class="estado estado--info"></p>
   <div id="solucion" class="dato-simple"></div>
   <div id="graficas"></div>
+  <h2 style="margin-top:22px">Procedimiento e iteraciones</h2>
   <div id="detalle"></div>
 </section>
 {% endblock %}
@@ -258,6 +259,18 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
       series: Array.from({length: n}, (_, j) => ({nombre: `x${j+1}`, tipo: "linea", puntos: r.tabla.map(f => [f.n, f.valores[j]])}))
     }];
     mostrarGraficas(graficas, document.getElementById("graficas"));
+  }
+  if (ITERATIVO && r.pasos && r.pasos.length) {
+    const titulo = document.createElement("h3");
+    titulo.textContent = "Sustituciones paso a paso";
+    detalle.appendChild(titulo);
+    r.pasos.forEach((paso) => {
+      const div = document.createElement("div");
+      div.className = "paso";
+      const h = document.createElement("h4"); h.textContent = paso.titulo;
+      const p = document.createElement("p"); p.className="paso-texto"; p.textContent=paso.detalle;
+      div.appendChild(h);div.appendChild(p);detalle.appendChild(div);
+    });
   }
   if (ITERATIVO) renderIteraciones(r.tabla, n, detalle);
   else renderPasos(r.pasos, n, detalle);

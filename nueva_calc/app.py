@@ -266,7 +266,7 @@ GENERICOS = {
         "seccion": "Proyecciones",
         "titulo": "Series de tiempo",
         "resumen": "Pronostica el siguiente periodo con promedio móvil o suavizamiento exponencial.",
-        "descripcion": "Calcula pronósticos con promedio móvil o suavizamiento exponencial. Permite optimizar automáticamente k o α comparando MAD, MSE y MAPE sobre los mismos periodos; también calcula r de Pearson.",
+        "descripcion": "Calcula pronósticos y muestra cada sustitución numérica. Permite comparar automáticamente k o α según MAD, MSE o MAPE; informa r de Pearson por separado.",
         "funcion": proyecciones.series_tiempo,
         "datos": {
             "titulo": "Valores de la serie (en orden)",

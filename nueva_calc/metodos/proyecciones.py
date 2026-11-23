@@ -20,11 +20,14 @@ def _recta(us, vs):
     sv = sum(vs)
     suv = sum(u * v for u, v in zip(us, vs))
     suu = sum(u * u for u in us)
-    denominador = n * suu - su ** 2
-    if abs(denominador) < 1e-12:
+    mu = su / n
+    mv = sv / n
+    cov = math.fsum((u - mu) * (v - mv) for u, v in zip(us, vs))
+    var = math.fsum((u - mu) ** 2 for u in us)
+    if var <= 1e-24:
         raise ValueError("Los valores de x no pueden ser todos iguales")
-    pendiente = (n * suv - su * sv) / denominador
-    intercepto = sv / n - pendiente * su / n
+    pendiente = cov / var
+    intercepto = mv - pendiente * mu
     return intercepto, pendiente, (n, su, sv, suv, suu)
 
 
@@ -60,9 +63,12 @@ def lineal(cuerpo):
     a, b, (n, sx, sy, sxy, sxx) = _recta(xs, ys)
     ajustados = [a + b * x for x in xs]
     r2, sse = _determinacion(ys, ajustados)
-    syy = sum(y * y for y in ys)
-    raiz = math.sqrt((n * sxx - sx ** 2) * (n * syy - sy ** 2))
-    r = (n * sxy - sx * sy) / raiz if raiz > 0 else 1.0
+    mx = sum(xs) / n
+    my = sum(ys) / n
+    numerador_r = math.fsum((x - mx) * (y - my) for x, y in filas)
+    var_x = math.fsum((x - mx) ** 2 for x in xs)
+    var_y = math.fsum((y - my) ** 2 for y in ys)
+    r = max(-1.0, min(1.0, numerador_r / math.sqrt(var_x * var_y))) if var_x > 0 and var_y > 0 else None
 
     tabla = [
         [str(i + 1), f6(x), f6(y), f6(x * y), f6(x * x), f6(yh), f6(y - yh)]
@@ -75,11 +81,12 @@ def lineal(cuerpo):
         {"titulo": "Sumas", "detalle": f"n = {n},  Σx = {f6(sx)},  Σy = {f6(sy)},  Σxy = {f6(sxy)},  Σx² = {f6(sxx)}"},
         {"titulo": "Pendiente", "detalle": f"b = (nΣxy − ΣxΣy) / (nΣx² − (Σx)²) = {f6(b)}"},
         {"titulo": "Intercepto", "detalle": f"a = ȳ − b·x̄ = {f6(a)}"},
-        {"titulo": "Correlación", "detalle": f"r = {f6(r)}"},
+        {"titulo": "Paso 4. Correlación de Pearson", "detalle": f"r = Σ[(x−x̄)(y−ȳ)] / √{{Σ(x−x̄)²·Σ(y−ȳ)²}} = {f6(r) if r is not None else 'no definida (Y constante)'}"},
+        {"titulo": "Paso 5. Evaluación del ajuste", "detalle": f"Se calcula ŷ_i = a + b·x_i, cada residuo e_i = y_i − ŷ_i y la suma de errores al cuadrado SSE = {f6(sse)}. R² = {f6(r2)}."},
     ]
     return _armar(
         f"y = {a:.6g} + {b:.6g}·x",
-        [["a (intercepto)", f6(a)], ["b (pendiente)", f6(b)], ["coeficiente de correlación r", f6(r)]],
+        [["a (intercepto)", f6(a)], ["b (pendiente)", f6(b)], ["coeficiente de correlación r", f6(r) if r is not None else "no definido"]],
         tabla, ["i", "x", "y", "x·y", "x²", "ŷ", "y − ŷ"], r2, sse, proyeccion, pasos,
         "Modelo y = a + b·x ajustado por mínimos cuadrados.",
     )
@@ -173,12 +180,21 @@ def cuadratica(cuerpo):
     sxy = sum(x * y for x, y in zip(xs, ys))
     sx2y = sum(x * x * y for x, y in zip(xs, ys))
 
-    matriz = [[n, s1, s2], [s1, s2, s3], [s2, s3, s4]]
-    independientes = [sy, sxy, sx2y]
-    try:
-        a, b, c = lineales.gauss_pivoteo(matriz, independientes)["solucion"]
-    except ValueError:
-        raise ValueError("No se puede ajustar una parábola: se necesitan al menos 3 valores de x distintos")
+    # Ajuste por mínimos cuadrados con X centradas y escaladas.
+    import numpy as np
+    centro = sum(xs) / n
+    escala = max(abs(x - centro) for x in xs)
+    if escala <= 1e-12:
+        raise ValueError("Se necesitan al menos 3 valores distintos de x")
+    z = np.array([(x - centro) / escala for x in xs], dtype=float)
+    matriz_ajuste = np.column_stack((np.ones(n), z, z * z))
+    coef, _, rango, _ = np.linalg.lstsq(matriz_ajuste, np.asarray(ys, dtype=float), rcond=None)
+    if rango < 3:
+        raise ValueError("No se puede ajustar una parábola: se necesitan al menos 3 valores distintos de x")
+    A, B, C = map(float, coef)
+    c = C / (escala ** 2)
+    b = B / escala - 2 * c * centro
+    a = A - (B / escala) * centro + c * centro ** 2
 
     ajustados = [a + b * x + c * x * x for x in xs]
     r2, sse = _determinacion(ys, ajustados)
@@ -196,7 +212,7 @@ def cuadratica(cuerpo):
             f"{f6(s1)}·a + {f6(s2)}·b + {f6(s3)}·c = {f6(sxy)}\n"
             f"{f6(s2)}·a + {f6(s3)}·b + {f6(s4)}·c = {f6(sx2y)}"
         )},
-        {"titulo": "Solución del sistema (Gauss con pivoteo)", "detalle": f"a = {f6(a)},  b = {f6(b)},  c = {f6(c)}"},
+        {"titulo": "Solución por mínimos cuadrados estables", "detalle": f"Se centra y escala x antes de resolver: a = {f6(a)}, b = {f6(b)}, c = {f6(c)}"},
     ]
     return _armar(
         f"y = {a:.6g} + {b:.6g}·x + {c:.6g}·x²",
@@ -298,70 +314,59 @@ def _optimizar_serie(ys, metodo, metrica):
 def series_tiempo(cuerpo):
     filas = leer_filas(cuerpo, 1, 3)
     ys = [p[0] for p in filas]
-    if not all(math.isfinite(y) for y in ys):
-        raise ValueError("Todos los valores de la serie deben ser finitos")
     n = len(ys)
+    if not all(math.isfinite(y) for y in ys):
+        raise ValueError("Los valores deben ser finitos")
     metodo = cuerpo.get("metodo","promedio-movil")
-    optimizar = cuerpo.get("optimizar") in (True,"true","on","1",1)
+    auto = str(cuerpo.get("optimizar","false")).lower() in ("true","on","1")
     criterio = cuerpo.get("criterio","MAD")
-    comparaciones=[]
-    inicio_eval=None
-    if optimizar:
-        (parametro,metricas_mejor),comparaciones,inicio_eval=_optimizar_serie(ys,metodo,criterio)
+    if auto:
+        (parametro, seleccion), comparaciones, inicio = _optimizar_serie(ys, metodo, criterio)
     else:
-        try:
-            parametro = float(cuerpo["parametro"])
-        except (KeyError,TypeError,ValueError):
-            raise ValueError("Escribe un valor válido para el parámetro")
-
-    pronosticos,siguiente,descripcion,formula=_pronosticar_serie(ys,metodo,parametro)
-    medicion=_metricas(ys,pronosticos)
-    tabla=[]
+        try: parametro = float(cuerpo["parametro"])
+        except (KeyError,TypeError,ValueError): raise ValueError("Introduce un parámetro numérico")
+        comparaciones = []
+        inicio = None
+        seleccion = None
+    pronos, siguiente, nombre, formula = _pronosticar_serie(ys,metodo,parametro)
+    indicadores = _metricas(ys,pronos)
+    tabla = []
+    detalle = []
     for t in range(n):
-        f=pronosticos[t]
-        if f is None:
+        pronostico = pronos[t]
+        if pronostico is None:
             tabla.append([str(t+1),f6(ys[t]),None,None,None,None,None])
             continue
-        e=ys[t]-f
-        porcentaje=abs(e)/abs(ys[t])*100 if ys[t]!=0 else None
-        tabla.append([str(t+1),f6(ys[t]),f6(f),f6(e),f6(abs(e)),f6(e*e),f6(porcentaje) if porcentaje is not None else None])
+        err = ys[t]-pronostico
+        porc = abs(err)/abs(ys[t])*100 if ys[t]!=0 else None
+        tabla.append([str(t+1),f6(ys[t]),f6(pronostico),f6(err),f6(abs(err)),f6(err*err),f6(porc)])
+        if metodo == "promedio-movil":
+            k = int(parametro)
+            base = " + ".join(f6(v) for v in ys[t-k:t])
+            expresion = f"({base}) / {k}"
+        else:
+            if t==1: expresion=f"F₂=Y₁={f6(ys[0])}"
+            else: expresion=f"{f6(parametro)}·{f6(ys[t-1])} + (1−{f6(parametro)})·{f6(pronos[t-1])}"
+        detalle.append([str(t+1),expresion,f6(pronostico)])
     tabla.append([str(n+1),"—",f6(siguiente),None,None,None,None])
-
-    resultados=[
-        [f"pronóstico para el periodo {n+1}",f6(siguiente)],
-        ["parámetro utilizado ("+("k" if metodo=="promedio-movil" else "α")+")",f6(parametro)],
-        ["MAD (error absoluto medio)",f6(medicion["MAD"])],
-        ["MSE (error cuadrático medio)",f6(medicion["MSE"])],
-        ["MAPE (%)",f6(medicion["MAPE"]) if medicion["MAPE"] is not None else "—"],
-        ["r de Pearson (real frente a pronóstico)",f6(medicion["r"]) if medicion["r"] is not None else "no definido"],
-    ]
-    tablas=[{"titulo":descripcion,
-        "columnas":["t","valor real","pronóstico","error","|error|","error²","|error| / valor (%)"],
-        "filas":tabla}]
-    pasos=[
-        {"titulo":"Fórmula","detalle":formula},
-        {"titulo":"Medidas de error","detalle":"MAD = promedio |error|, MSE = promedio error², MAPE = promedio |error|/|valor real|·100. r = correlación lineal de valores reales y pronosticados; no mide directamente la precisión."}
-    ]
-    if optimizar:
-        tablas.append({
-            "titulo":"Comparación de parámetros (misma ventana de evaluación)",
-            "columnas":["k" if metodo=="promedio-movil" else "α","MAD","MSE","MAPE (%)","r Pearson","periodos"],
-            "filas":[[f6(p),f6(v["MAD"]),f6(v["MSE"]),
-                      f6(v["MAPE"]) if v["MAPE"] is not None else "—",
-                      f6(v["r"]) if v["r"] is not None else "no definido",
-                      str(v["periodos"])] for p,v in comparaciones],
-        })
-        resultados += [
-            ["mejor parámetro según "+criterio,f6(parametro)],
-            [criterio+" en ventana de evaluación",f6(metricas_mejor[criterio])],
-            ["periodos comparados",f"del {inicio_eval+1} al {n}"],
-        ]
-        pasos.append({"titulo":"Cómo se eligió el mejor parámetro",
-                      "detalle":f"Se probaron {len(comparaciones)} parámetros. Todos se evaluaron en los periodos {inicio_eval+1} a {n}, usando únicamente observaciones pasadas para cada pronóstico. Se eligió el mínimo {criterio}. No equivale a validar la precisión futura con datos independientes."})
-    return {
-        "resultados":resultados,
-        "tablas":tablas,
-        "pasos":pasos,
-        "aviso":None,
-        "info":"La última fila es el pronóstico del siguiente periodo. r cercano a ±1 indica asociación lineal fuerte, no necesariamente error bajo.",
-    }
+    resultados = [[f"Pronóstico para el periodo {n+1}",f6(siguiente)],
+                  ["Parámetro utilizado ("+("k" if metodo=="promedio-movil" else "α")+")",f6(parametro)],
+                  ["MAD",f6(indicadores["MAD"])],["MSE",f6(indicadores["MSE"])],
+                  ["MAPE (%)",f6(indicadores["MAPE"]) if indicadores["MAPE"] is not None else "no definido"],
+                  ["r de Pearson (real/pronóstico)",f6(indicadores["r"]) if indicadores["r"] is not None else "no definido"]]
+    tablas = [{"titulo":nombre,"columnas":["Periodo","Real","Pronóstico","Error","|Error|","Error²","Error %"],"filas":tabla},
+              {"titulo":"Sustitución numérica de cada pronóstico","columnas":["Periodo","Cálculo","Resultado"],"filas":detalle}]
+    pasos = [{"titulo":"Paso 1. Configuración","detalle":f"Método: {nombre}. {formula}"},
+             {"titulo":"Paso 2. Sustituciones","detalle":"La segunda tabla muestra los valores numéricos introducidos en cada fórmula, sin usar datos futuros."},
+             {"titulo":"Paso 3. Errores","detalle":"Error = Real − Pronóstico. MAD = promedio |Error|; MSE = promedio Error²; MAPE = promedio 100·|Error|/|Real| (sin periodos con Real=0)."},
+             {"titulo":"Paso 4. Correlación","detalle":"r de Pearson relaciona valores reales y pronosticados; no equivale a un error de predicción."},
+             {"titulo":"Paso 5. Siguiente periodo","detalle":f"Con los últimos datos disponibles: F_{n+1} = {f6(siguiente)}"}]
+    if auto:
+        tablas.append({"titulo":f"Comparación en los mismos periodos ({inicio+1}–{n})",
+                      "columnas":["k / α","MAD","MSE","MAPE (%)","r","periodos"],
+                      "filas":[[f6(c),f6(m["MAD"]),f6(m["MSE"]),f6(m["MAPE"]) if m["MAPE"] is not None else "—",f6(m["r"]) if m["r"] is not None else "—",str(m["periodos"])] for c,m in comparaciones]})
+        resultados.append(["Mejor parámetro por "+criterio,f6(parametro)])
+        resultados.append([criterio+" en la ventana comparada",f6(seleccion[criterio])])
+        pasos.append({"titulo":"Paso 6. Selección automática","detalle":f"Se probaron {len(comparaciones)} parámetros sobre los mismos periodos {inicio+1}–{n}. Se eligió el menor {criterio}; no garantiza el mejor resultado futuro."})
+    return {"resultados":resultados,"tablas":tablas,"pasos":pasos,
+            "aviso":None,"info":"La última fila contiene el pronóstico del siguiente periodo. La optimización histórica no implica validación independiente."}

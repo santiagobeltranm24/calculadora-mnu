@@ -131,6 +131,10 @@ def jacobi(A, b, x0=None, tol=1e-6, iter_max=50):
 
 
 def gauss_seidel(A, b, x0=None, tol=1e-6, iter_max=50):
+    if not math.isfinite(float(tol)) or float(tol) <= 0:
+        raise ValueError("La tolerancia debe ser mayor que cero")
+    if not 1 <= int(iter_max) <= 10000:
+        raise ValueError("Las iteraciones máximas deben estar entre 1 y 10000")
     aum = _preparar(A, b)
     n = len(aum)
     M = [fila[:n] for fila in aum]
@@ -150,12 +154,20 @@ def gauss_seidel(A, b, x0=None, tol=1e-6, iter_max=50):
         raise ValueError("El vector inicial debe tener n componentes")
 
     tabla = []
+    procedimiento = []
     convergio = False
 
     for paso in range(1, int(iter_max) + 1):
         previo = x[:]
         for i in range(n):
-            x[i] = (c[i] - sum(M[i][j] * x[j] for j in range(n) if j != i)) / M[i][i]
+            aportes = [(M[i][j], x[j]) for j in range(n) if j != i]
+            suma = sum(a*v for a,v in aportes)
+            calculado = (c[i]-suma)/M[i][i]
+            if paso <= 20:
+                detalle_suma = " + ".join(f"({a:.6g}·{v:.6g})" for a,v in aportes) or "0"
+                procedimiento.append({"titulo":f"Iteración {paso}, x{i+1}",
+                   "detalle":f"x{i+1} = [{c[i]:.6g} − ({detalle_suma})] / {M[i][i]:.6g} = {calculado:.9g}"})
+            x[i] = calculado
         if not all(math.isfinite(v) for v in x):
             raise ValueError("El método diverge: aparecen valores no finitos")
         error = max(abs(x[i] - previo[i]) for i in range(n))
@@ -169,6 +181,7 @@ def gauss_seidel(A, b, x0=None, tol=1e-6, iter_max=50):
         "solucion": x,
         "iteraciones": len(tabla),
         "tabla": tabla,
+        "pasos": procedimiento,
         "residuo": _residuo(A, b, x),
         "aviso": aviso,
         "info": "x_i^(k+1) = (b_i − Σ_(j<i) a_ij·x_j^(k+1) − Σ_(j>i) a_ij·x_j^(k)) / a_ii; error = máx|x^(k+1) − x^(k)|",
