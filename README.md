@@ -122,3 +122,16 @@ El plan gratuito de Render puede suspender el servicio tras un periodo sin activ
 ## Autor
 
 Proyecto académico desarrollado por **Santiago Beltrán**.
+
+## Optimización de series de tiempo
+
+En **Hito 4 → Series de tiempo**, puedes elegir el promedio móvil (k) o el suavizamiento exponencial (α).
+
+- **Manual:** escribes k o α y calculas el pronóstico.
+- **Buscar mejor parámetro automáticamente:** compara k enteros válidos o α desde 0.05 hasta 1.00 en pasos de 0.05.
+- **Criterio:** selecciona menor MAD, menor MSE o menor MAPE. MAPE requiere valores observados distintos de cero.
+- **Comparación justa:** todos los candidatos se evalúan en los mismos periodos históricos finales (aproximadamente 40%, mínimo dos). Los pronósticos de cada periodo usan solo observaciones anteriores.
+- **Resultados:** parámetro elegido, tabla comparativa, indicadores y coeficiente de correlación de Pearson r entre valores reales y pronosticados.
+- **Interpretación:** r no es un error ni sustituye MAD/MSE/MAPE. La comparación sobre datos históricos no prueba que un parámetro sea el mejor con datos futuros.
+
+El gráfico de series de tiempo continúa mostrando los valores reales y pronósticos, incluido el periodo siguiente.

@@ -266,7 +266,7 @@ GENERICOS = {
         "seccion": "Proyecciones",
         "titulo": "Series de tiempo",
         "resumen": "Pronostica el siguiente periodo con promedio móvil o suavizamiento exponencial.",
-        "descripcion": "Calcula pronósticos periodo a periodo con promedio móvil o suavizamiento exponencial, mide el error (MAD, MSE, MAPE) y proyecta el siguiente periodo.",
+        "descripcion": "Calcula pronósticos con promedio móvil o suavizamiento exponencial. Permite optimizar automáticamente k o α comparando MAD, MSE y MAPE sobre los mismos periodos; también calcula r de Pearson.",
         "funcion": proyecciones.series_tiempo,
         "datos": {
             "titulo": "Valores de la serie (en orden)",
@@ -277,7 +277,9 @@ GENERICOS = {
         },
         "campos": [
             {"nombre": "metodo", "etiqueta": "método", "opciones": [["promedio-movil", "Promedio móvil"], ["suavizamiento", "Suavizamiento exponencial"]]},
-            {"nombre": "parametro", "etiqueta": "periodo k  /  factor α", "valor": "3"},
+            {"nombre": "parametro", "etiqueta": "periodo k / factor α", "valor": "3"},
+            {"nombre": "optimizar", "etiqueta": "selección automática", "opciones": [["false", "Usar parámetro manual"], ["true", "Buscar mejor parámetro automáticamente"]]},
+            {"nombre": "criterio", "etiqueta": "elegir mejor según", "opciones": [["MAD", "Menor MAD"], ["MSE", "Menor MSE"], ["MAPE", "Menor MAPE"]]},
         ],
     },
 }
