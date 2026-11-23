@@ -2,3 +2,5 @@ Flask>=3.0
 sympy>=1.13
 numpy>=1.26
 gunicorn>=22.0
+reportlab>=4.4,<6
+python-calamine>=0.3,<1

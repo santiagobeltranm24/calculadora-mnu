@@ -1,9 +1,9 @@
-from flask import Flask, jsonify, render_template, request, abort
+from flask import Flask, jsonify, render_template, request, abort, send_file
 
 from metodos import (
     redondeo, punto_fijo, newton, newton2,
     biseccion, falsa_posicion, secante, lineales,
-    aproximacion, interpolacion, proyecciones, graficas, no_lineales,
+    aproximacion, interpolacion, proyecciones, graficas, no_lineales, importacion, reportes,
 )
 from metodos.ayuda import AYUDA
 
@@ -490,6 +490,30 @@ def api_generico(slug):
 def api_no_lineales():
     cuerpo = request.get_json(force=True)
     return respuesta_api(lambda: no_lineales.resolver(cuerpo))
+
+
+@app.route("/api/importar-tabla", methods=["POST"])
+def api_importar_tabla():
+    try:
+        if "archivo" not in request.files:
+            raise ValueError("Selecciona un archivo CSV o Excel")
+        columnas = int(request.form.get("columnas","2"))
+        return jsonify({"ok":True,"filas":importacion.extraer(request.files["archivo"],columnas)})
+    except Exception as err:
+        return jsonify({"ok":False,"mensaje":str(err)}),400
+
+
+@app.route("/api/exportar-pdf", methods=["POST"])
+def api_exportar_pdf():
+    try:
+        if request.content_length and request.content_length>1024*1024:
+            raise ValueError("El reporte supera 1 MB")
+        data=request.get_json(force=True)
+        archivo=reportes.generar(data)
+        return send_file(archivo,mimetype="application/pdf",as_attachment=True,
+                         download_name="procedimiento-metodos-numericos.pdf")
+    except Exception as err:
+        return jsonify({"ok":False,"mensaje":str(err)}),400
 
 
 @app.route("/api/base", methods=["POST"])
