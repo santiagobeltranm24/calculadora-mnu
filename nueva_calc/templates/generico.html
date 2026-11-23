@@ -16,6 +16,11 @@
       <button type="button" id="mas" class="boton-suave">+ fila</button>
       <button type="button" id="menos" class="boton-suave">− fila</button>
     </div>
+    <div class="archivo-datos">
+      <label for="archivo-tabla">Importar tabla CSV o Excel:</label>
+      <input type="file" id="archivo-tabla" accept=".csv,.xlsx,.xls,.xlsb,.ods">
+      <span id="mensaje-importacion" class="estado estado--info" aria-live="polite"></span>
+    </div>
     {% endif %}
 
     <div class="formulario-linea">
@@ -42,6 +47,7 @@
   <p id="aviso" class="estado estado--aviso"></p>
   <p id="info" class="estado estado--info"></p>
   <div id="resultados" class="dato-simple"></div>
+  <div class="acciones-reporte"><button type="button" id="descargar-pdf" class="boton-suave" disabled>Descargar procedimiento PDF</button></div>
   <h2 style="margin-top:22px">Procedimiento paso a paso</h2>
   <div id="tutorial-dinamico"></div>
   <div id="pasos"></div>
@@ -56,6 +62,15 @@
 const RUTA = "/api/generico/{{ slug }}";
 const DATOS = {{ m.datos | tojson }};
 const FORMULA = {{ (ayuda.formula if ayuda else m.resumen) | tojson }};
+const TITULO_REPORTE = {{ m.titulo | tojson }};
+let reporteActual = null;
+document.getElementById("descargar-pdf").addEventListener("click",async()=>{
+  if(!reporteActual)return;
+  const boton=document.getElementById("descargar-pdf");boton.disabled=true;
+  try{await descargarPDFReporte(reporteActual);}
+  catch(error){mostrarEstado(document.getElementById("estado"),"error",error.message);}
+  finally{boton.disabled=false;}
+});
 
 function celdaDato(valor) {
   const input = document.createElement("input");
@@ -166,7 +181,23 @@ function renderPasos(pasos, contenedor) {
   });
 }
 
-if (DATOS) construirEditor();
+if (DATOS) {
+  construirEditor();
+  const entrada=document.getElementById("archivo-tabla");
+  entrada.addEventListener("change",async()=>{
+    const mensaje=document.getElementById("mensaje-importacion");
+    if(!entrada.files.length)return;
+    mensaje.textContent="Leyendo archivo...";
+    try{
+      const filas=await importarArchivoNumerico(entrada.files[0],DATOS.columnas.length);
+      const actuales=document.querySelectorAll("#datos .fila-dato:not(.fila-cabecera)");
+      actuales.forEach(f=>f.remove());
+      filas.forEach(valores=>agregarFila(valores));
+      mensaje.textContent=filas.length+" filas importadas. Revisa los datos y pulsa Calcular.";
+    }catch(error){mensaje.textContent="Error: "+error.message;}
+    entrada.value="";
+  });
+}
 
 document.getElementById("formulario").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -183,6 +214,8 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
   aviso.textContent = "";
   info.textContent = "";
   resultados.innerHTML = "";
+  reporteActual=null;
+  document.getElementById("descargar-pdf").disabled=true;
   tablas.innerHTML = "";
   pasos.innerHTML = "";
   mostrarGraficas([], document.getElementById("graficas"));
@@ -211,13 +244,20 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
   mostrarGraficas(r.graficas, document.getElementById("graficas"));
   r.tablas.forEach((t) => renderTabla(t, tablas));
   renderPasos(r.pasos || [], pasos);
-  crearTutorPasos(document.getElementById("tutorial-dinamico"), [
+  const tutorial = [
     {titulo:"Fórmula general",detalle:FORMULA},
     {titulo:"Datos y parámetros",detalle:Object.entries(cuerpo).map(([k,v])=>k+" = "+(Array.isArray(v)?JSON.stringify(v):v)).join("; ")},
     ...(r.pasos||[]),
     {titulo:"Resultados obtenidos",detalle:(r.resultados||[]).map(([k,v])=>k+": "+v).join("; ")},
     {titulo:"Interpretación",detalle:r.aviso||r.info||"Compara el resultado con la tabla y la gráfica."}
-  ]);
+  ];
+  crearTutorPasos(document.getElementById("tutorial-dinamico"),tutorial);
+  reporteActual={
+    titulo:TITULO_REPORTE,formula:FORMULA,parametros:cuerpo,
+    resultados:r.resultados||[],pasos:tutorial,tablas:r.tablas||[],
+    graficas:r.graficas||[],aviso:r.aviso,info:r.info
+  };
+  document.getElementById("descargar-pdf").disabled=false;
 });
 </script>
 {% endblock %}

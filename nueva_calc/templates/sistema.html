@@ -19,6 +19,11 @@
 
       <div class="campo"><label>matriz A y vector b</label></div>
       <div id="rejilla" class="rejilla-sistema"></div>
+      <div class="archivo-datos">
+        <label for="archivo-matriz">Importar matriz ampliada CSV/Excel (A y b):</label>
+        <input type="file" id="archivo-matriz" accept=".csv,.xlsx,.xls,.xlsb,.ods">
+        <span id="mensaje-importacion" class="estado estado--info" aria-live="polite"></span>
+      </div>
 
       {% if m.iterativo %}
       <div class="campo"><label>vector inicial x0</label></div>
@@ -43,6 +48,7 @@
   <p id="aviso" class="estado estado--aviso"></p>
   <p id="info" class="estado estado--info"></p>
   <div id="solucion" class="dato-simple"></div>
+  <div class="acciones-reporte"><button type="button" id="descargar-pdf" class="boton-suave" disabled>Descargar procedimiento PDF</button></div>
   <div id="graficas"></div>
   <h2 style="margin-top:22px">Procedimiento e iteraciones</h2>
   <div id="tutorial-dinamico"></div>
@@ -56,6 +62,15 @@ const RUTA = "/api/sistemas/{{ slug }}";
 const ITERATIVO = {{ m.iterativo | tojson }};
 const EJEMPLO = {{ m.ejemplo | tojson }};
 const FORMULA = {{ (ayuda.formula if ayuda else m.resumen) | tojson }};
+const TITULO_REPORTE = {{ m.titulo | tojson }};
+let reporteActual = null;
+document.getElementById("descargar-pdf").addEventListener("click",async()=>{
+  if(!reporteActual)return;
+  const boton=document.getElementById("descargar-pdf");boton.disabled=true;
+  try{await descargarPDFReporte(reporteActual);}
+  catch(error){mostrarEstado(document.getElementById("estado"),"error",error.message);}
+  finally{boton.disabled=false;}
+});
 
 let datos = { A: EJEMPLO.A.map((f) => f.slice()), b: EJEMPLO.b.slice(), x0: [] };
 
@@ -138,6 +153,20 @@ document.getElementById("tamano").addEventListener("change", () => {
 });
 
 construirRejilla(tamanoActual());
+document.getElementById("archivo-matriz").addEventListener("change",async e=>{
+  const input=e.target,mensaje=document.getElementById("mensaje-importacion");
+  if(!input.files.length)return;
+  const n=tamanoActual();
+  mensaje.textContent="Leyendo archivo...";
+  try{
+    const filas=await importarArchivoNumerico(input.files[0],n+1);
+    if(filas.length!==n)throw new Error("La matriz debe tener "+n+" filas y "+(n+1)+" columnas (A y b). Ajusta antes el tamaño n.");
+    datos.A=filas.map(f=>f.slice(0,n));datos.b=filas.map(f=>f[n]);
+    construirRejilla(n);
+    mensaje.textContent="Matriz importada correctamente. Pulsa Calcular.";
+  }catch(error){mensaje.textContent="Error: "+error.message;}
+  input.value="";
+});
 
 function renderMatriz(paso, n) {
   const tabla = document.createElement("table");
@@ -213,6 +242,8 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
   aviso.textContent = "";
   info.textContent = "";
   solucion.innerHTML = "";
+  reporteActual=null;
+  document.getElementById("descargar-pdf").disabled=true;
   detalle.innerHTML = "";
   mostrarGraficas([], document.getElementById("graficas"));
 
@@ -281,6 +312,21 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
     {titulo:"Resultado y residuo",detalle:"x = ("+r.solucion.map(v=>formatear(v)).join(", ")+"); residuo máximo = "+formatear(r.residuo)}
   ];
   crearTutorPasos(document.getElementById("tutorial-dinamico"),tutorial);
+  const tablaIterativa=ITERATIVO?[{titulo:"Iteraciones",columnas:["n",...Array.from({length:n},(_,i)=>"x"+(i+1)),"Error"],
+    filas:r.tabla.map(f=>[f.n,...f.valores,f.error])}]:[];
+  const graficasPDF=(ITERATIVO&&r.tabla)?[
+    {titulo:"Error por iteración",eje_x:"Iteración",eje_y:"Error",
+      series:[{nombre:"Error",tipo:"linea",puntos:r.tabla.map(f=>[f.n,f.error])}]}},
+    {titulo:"Evolución de incógnitas",eje_x:"Iteración",eje_y:"Valor",
+      series:Array.from({length:n},(_,j)=>({nombre:"x"+(j+1),tipo:"linea",puntos:r.tabla.map(f=>[f.n,f.valores[j]])}))}
+  ]:[];
+  reporteActual={
+    titulo:TITULO_REPORTE,formula:FORMULA,parametros:{A,b,x0:cuerpo.x0,tolerancia:cuerpo.tol},
+    resultados:[...r.solucion.map((v,i)=>["x"+(i+1),v]),["Residuo máximo",r.residuo]],
+    pasos:ITERATIVO?tutorial:[...tutorial,...(r.pasos||[])],tablas:tablaIterativa,
+    graficas:graficasPDF,aviso:r.aviso,info:r.info
+  };
+  document.getElementById("descargar-pdf").disabled=false;
   if (ITERATIVO) renderIteraciones(r.tabla, n, detalle);
   else renderPasos(r.pasos, n, detalle);
 

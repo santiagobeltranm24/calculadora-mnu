@@ -22,6 +22,7 @@
   <div class="controles-fila"><button type="button" class="boton-suave" id="ejemplo">Restablecer ejemplo</button><button type="button" class="boton-suave" id="copiar">Copiar procedimiento</button></div>
   <p id="estado" class="estado"></p><p id="aviso" class="estado estado--aviso"></p><p id="info" class="estado estado--info"></p>
   <div id="resultados" class="dato-simple"></div>
+  <div class="acciones-reporte"><button type="button" id="descargar-pdf" class="boton-suave" disabled>Descargar procedimiento PDF</button></div>
   <h2>Procedimiento guiado</h2><div id="tutorial-dinamico"></div>
   <h2>Tabla de iteraciones</h2><div class="tabla-envoltura"><table class="tabla"><thead><tr><th>n</th><th>x</th><th>y</th><th>Error</th><th>Residuo</th></tr></thead><tbody id="filas"></tbody></table></div>
   <h2>Convergencia</h2><div id="graficas"></div>
@@ -30,6 +31,14 @@
 {% block scripts %}
 <script>
 let ultimoTexto = "";
+let reporteActual = null;
+document.getElementById("descargar-pdf").addEventListener("click",async()=>{
+  if(!reporteActual)return;
+  const boton=document.getElementById("descargar-pdf");boton.disabled=true;
+  try{await descargarPDFReporte(reporteActual);}
+  catch(error){mostrarEstado(document.getElementById("estado"),"error",error.message);}
+  finally{boton.disabled=false;}
+});
 document.getElementById("ejemplo").addEventListener("click",()=>{
   Object.entries({f1:"x**2 + y**2 - 4",f2:"x - y - 1",x0:"1.8",y0:"0.8",tol:"0.0000001",iter_max:"30"}).forEach(([id,v])=>document.getElementById(id).value=v);
 });
@@ -45,6 +54,7 @@ document.getElementById("formulario").addEventListener("submit",async ev=>{
   const pasos=document.getElementById("tutorial-dinamico"),filas=document.getElementById("filas");
   const res=document.getElementById("resultados");
   pasos.replaceChildren();filas.replaceChildren();res.replaceChildren();ultimoTexto="";
+  reporteActual=null;document.getElementById("descargar-pdf").disabled=true;
   mostrarGraficas([],document.getElementById("graficas"));
   mostrarEstado(estado,"info","Calculando...");
   try {
@@ -63,6 +73,17 @@ document.getElementById("formulario").addEventListener("submit",async ev=>{
       {titulo:"Verificación final",detalle:"||F(X)||∞ = "+formatear(r.residuo)+"; "+(r.convergio?"cumple la tolerancia.":"no cumple la tolerancia.")}
     ];
     ultimoTexto=contenido.map(p=>p.titulo+"\n"+p.detalle).join("\n\n");
+    reporteActual={
+      titulo:"Newton para sistemas no lineales",formula:r.formula,parametros:cuerpo,
+      resultados:[["x",r.solucion[0]],["y",r.solucion[1]],["Residuo final",r.residuo]],
+      pasos:contenido,
+      tablas:[{titulo:"Iteraciones",columnas:["Iteración","x","y","Error","Residuo"],
+        filas:r.tabla.map(f=>[f.n,f.x,f.y,f.error,f.residuo])}],
+      graficas:[{titulo:"Convergencia del residuo",eje_x:"Iteración",eje_y:"Residuo",
+        series:[{nombre:"Residuo",tipo:"linea",puntos:r.tabla.map(f=>[f.n,f.residuo])}]}],
+      aviso:r.aviso,info:r.info
+    };
+    document.getElementById("descargar-pdf").disabled=false;
     if (typeof crearTutorPasos==="function")crearTutorPasos(pasos,contenido);
     else contenido.forEach(p=>{const d=document.createElement("div");d.className="paso";d.textContent=p.titulo+": "+p.detalle;pasos.appendChild(d);});
     r.tabla.forEach(f=>{const tr=document.createElement("tr");[f.n,f.x,f.y,f.error,f.residuo].forEach(v=>{const td=document.createElement("td");td.textContent=formatear(v);tr.appendChild(td);});filas.appendChild(tr);});

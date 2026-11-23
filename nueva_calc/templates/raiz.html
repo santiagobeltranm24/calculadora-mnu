@@ -32,6 +32,7 @@
   <p id="aviso" class="estado estado--aviso"></p>
   <p id="info" class="estado estado--info"></p>
   <div id="resumen" class="dato-simple"></div>
+  <div class="acciones-reporte"><button type="button" id="descargar-pdf" class="boton-suave" disabled>Descargar procedimiento PDF</button></div>
   <h2>Solución guiada e iteraciones</h2>
   <div id="tutorial-dinamico"></div>
 
@@ -58,6 +59,15 @@ const GRAFICA = {{ m.grafica | tojson }};
 const RUTA = "/api/raices/{{ slug }}";
 const FORMULA = {{ (ayuda.formula if ayuda else m.resumen) | tojson }};
 const TITULO = {{ m.titulo | tojson }};
+const SLUG = {{ slug | tojson }};
+let reporteActual = null;
+document.getElementById("descargar-pdf").addEventListener("click",async()=>{
+  if(!reporteActual)return;
+  const boton=document.getElementById("descargar-pdf");boton.disabled=true;
+  try{await descargarPDFReporte(reporteActual);}
+  catch(error){mostrarEstado(document.getElementById("estado"),"error",error.message);}
+  finally{boton.disabled=false;}
+});
 
 if (GRAFICA) montarGraficadora("ggb");
 
@@ -74,6 +84,8 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
   const tbody = document.getElementById("cuerpo");
   tbody.innerHTML = "";
   resumen.innerHTML = "";
+  reporteActual=null;
+  document.getElementById("descargar-pdf").disabled=true;
   aviso.textContent = "";
   info.textContent = "";
 
@@ -111,13 +123,20 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
   const pasos = [
     {titulo:"Fórmula del método",detalle:FORMULA},
     {titulo:"Datos y función",detalle:Object.entries(cuerpo).map(([k,v])=>k+" = "+v).join("; ")},
-    ...r.tabla.map((fila,i)=>({
-      titulo:"Iteración "+(i+1),
-      detalle:CLAVES.filter(k=>fila[k]!==undefined&&fila[k]!==null).map(k=>k+" = "+formatear(fila[k],k)).join("; ")
-    })),
+    ...desarrolloRaices(SLUG,r.tabla,FORMULA).slice(1),
     {titulo:"Resultado y verificación",detalle:"Raíz aproximada = "+formatear(r.raiz)+"; error final = "+errorFinal+". "+(r.convergio?"Cumple la tolerancia.":"No cumple la tolerancia solicitada.")}
   ];
   crearTutorPasos(document.getElementById("tutorial-dinamico"),pasos);
+  reporteActual={
+    titulo:TITULO,formula:FORMULA,parametros:cuerpo,
+    resultados:[["Raíz aproximada",r.raiz],["Iteraciones",r.iteraciones],["Error final",errorFinal]],
+    pasos,tablas:[{titulo:"Tabla completa de iteraciones",columnas:{{ m.columnas | map('last') | list | tojson }},
+      filas:r.tabla.map(f=>CLAVES.map(k=>f[k]??null))}],
+    graficas:[{titulo:"Puntos visitados",eje_x:"x",eje_y:"f(x)",
+      series:[{nombre:"Evaluaciones",tipo:"puntos",puntos:r.puntos||[]}]}],
+    aviso:r.aviso,info:r.info
+  };
+  document.getElementById("descargar-pdf").disabled=false;
   if (GRAFICA) graficarFuncion(r.expresion_ggb, r.puntos, NOMBRE_GGB, r.extras);
 });
 </script>
