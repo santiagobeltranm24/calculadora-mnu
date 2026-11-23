@@ -31,7 +31,7 @@ def ejecutar(f, a, b, tol=1e-6, iter_max=50):
         c = (a * fb - b * fa) / denominador
         fc = evaluar(fn, c)
         error = None if c_ant is None else abs(c - c_ant)
-        tabla.append({"n": paso, "a": a, "b": b, "c": c, "fc": fc, "error": error})
+        tabla.append({"n": paso, "a": a, "b": b, "fa": fa, "fb": fb, "c": c, "fc": fc, "error": error})
         puntos.append([c, fc])
         if fc == 0 or (error is not None and error <= tol):
             convergio = True

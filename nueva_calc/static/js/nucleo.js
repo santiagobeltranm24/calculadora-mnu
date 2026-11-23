@@ -111,3 +111,31 @@ function mostrarEstado(elemento, clase, texto) {
   elemento.className = `estado estado--${clase}`;
   elemento.textContent = texto;
 }
+
+// Exporta fórmulas, pasos, tablas y gráficas al PDF generado por Flask.
+async function descargarPDFReporte(reporte, nombre="procedimiento-metodos-numericos.pdf") {
+  if (!reporte) throw new Error("Primero realiza el cálculo");
+  const respuesta=await fetch("/api/exportar-pdf",{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(reporte)
+  });
+  if(!respuesta.ok){
+    let mensaje="No se pudo generar el PDF";
+    try{const d=await respuesta.json();mensaje=d.mensaje||mensaje;}catch(_){}
+    throw new Error(mensaje);
+  }
+  const blob=await respuesta.blob();
+  if(blob.type!=="application/pdf")throw new Error("El servidor no devolvió un PDF válido");
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");a.href=url;a.download=nombre;a.style.display="none";
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+async function importarArchivoNumerico(file,columnas) {
+  if(!file)throw new Error("Selecciona un archivo CSV o Excel");
+  const form=new FormData();form.append("archivo",file);form.append("columnas",String(columnas));
+  const respuesta=await fetch("/api/importar-tabla",{method:"POST",body:form});
+  const data=await respuesta.json();
+  if(!respuesta.ok||!data.ok)throw new Error(data.mensaje||"No se pudo importar el archivo");
+  return data.filas;
+}

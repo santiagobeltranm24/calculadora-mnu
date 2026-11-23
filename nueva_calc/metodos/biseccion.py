@@ -27,7 +27,7 @@ def ejecutar(f, a, b, tol=1e-6, iter_max=50):
         c = (a + b) / 2
         fc = evaluar(fn, c)
         error = (b - a) / 2
-        tabla.append({"n": paso, "a": a, "b": b, "c": c, "fc": fc, "error": error})
+        tabla.append({"n": paso, "a": a, "b": b, "fa": fa, "fb": fb, "c": c, "fc": fc, "error": error})
         puntos.append([c, fc])
         if fc == 0 or error <= tol:
             convergio = True

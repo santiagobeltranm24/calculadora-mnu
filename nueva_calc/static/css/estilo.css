@@ -823,3 +823,19 @@ table.matriz td.pivote {
 .tutorial-paso h3{font-size:1rem;margin:0 0 12px}.tutorial-paso p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;color:var(--texto);font-family:var(--mono);font-size:.86rem}
 .tutorial-controles button:disabled{opacity:.35;cursor:not-allowed}
 @media(max-width:700px){.tutorial-activo{padding:14px}.tutorial-controles{justify-content:center}.tutorial-tarjeta{min-height:100px}}
+
+/* Gráficas interactivas y acciones de importación/exportación */
+.grafica-cabecera{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.grafica-cabecera h3{margin:0}
+.grafica-controles{display:flex;gap:7px;flex-wrap:wrap}
+.grafica-controles .boton-suave{padding:7px 11px;min-width:38px;font-size:.83rem}
+.grafica-interactiva{position:relative;overflow:hidden}
+.grafica-interactiva svg{display:block;width:100%;height:auto;user-select:none;cursor:crosshair}
+.grafica-interactiva svg:active{cursor:grabbing}
+.grafica-tooltip{position:absolute;pointer-events:none;max-width:240px;padding:7px 10px;border:1px solid rgba(167,139,250,.5);border-radius:8px;background:rgba(16,13,34,.95);font-size:.73rem;font-family:var(--mono);color:white;z-index:4;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+.grafica-tooltip[hidden]{display:none}
+.grafica-ayuda{font-size:.77rem;color:var(--suave);margin:9px 0 0}
+.archivo-datos{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:12px 0 18px}
+.archivo-datos input[type=file]{max-width:240px;font-size:.82rem}
+.acciones-reporte{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+.acciones-reporte button:disabled{opacity:.45;cursor:not-allowed}
