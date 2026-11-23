@@ -5,6 +5,8 @@ import math
 import os
 import sys
 import unittest
+import re
+import subprocess
 import zipfile
 
 sys.path.insert(0,os.path.abspath(os.path.join(os.path.dirname(__file__),"..")))
@@ -101,6 +103,19 @@ class TestCalculadora(unittest.TestCase):
         data=r.get_json()
         self.assertTrue(data["ok"],data)
         self.assertEqual(data["filas"],[[1.,2.],[2.,4.]])
+
+    def test_javascript_en_paginas_generadas(self):
+        rutas=["/hito2/newton","/hito2/punto-fijo","/hito3/biseccion",
+               "/hito3/gauss","/hito4/gauss-seidel","/hito4/lagrange",
+               "/hito4/series-de-tiempo","/hito4/newton-sistemas"]
+        for ruta in rutas:
+            html=self.client.get(ruta).get_data(as_text=True)
+            scripts=re.findall(r"<script(?:\\s[^>]*)?>(.*?)</script>",html,re.S)
+            for script in scripts:
+                if not script.strip():continue
+                with self.subTest(ruta=ruta):
+                    p=subprocess.run(["node","--check","-"],input=script,text=True,capture_output=True)
+                    self.assertEqual(p.returncode,0,p.stderr)
 
     def test_pdf_exporta_procedimientos_y_graficas(self):
         payload={"titulo":"Newton y regresión","formula":"x(n+1)=x(n)-f/f'",

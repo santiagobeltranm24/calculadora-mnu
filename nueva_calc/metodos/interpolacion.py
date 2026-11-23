@@ -143,7 +143,14 @@ def lagrange(cuerpo):
         filas.append([str(i), f6(xs[i]), f6(ys[i]), f6(li), f6(ys[i] * li)])
         base = np.poly(raices) if raices else np.array([1.0])
         polinomio = np.polyadd(polinomio, ys[i] / denominador * base)
-        detalles.append(f"L_{i}(x) = Π (x − x_j)/(x_{i} − x_j), j ≠ {i}  →  {f6(li)}")
+        num_factores = " · ".join(f"({f6(x)} − {f6(xs[j])})" for j in range(n) if j != i) or "1"
+        den_factores = " · ".join(f"({f6(xs[i])} − {f6(xs[j])})" for j in range(n) if j != i) or "1"
+        detalles.append(
+            {"titulo": f"Base de Lagrange L_{i}({f6(x)})",
+             "detalle": f"L_{i} = [{num_factores}] / [{den_factores}] = "
+                        f"{f6(numerador)} / {f6(denominador)} = {f6(li)}. "
+                        f"Término y_{i}·L_{i} = {f6(ys[i])}·{f6(li)} = {f6(ys[i]*li)}."}
+        )
 
     coeficientes = np.atleast_1d(polinomio).tolist()
 
@@ -159,8 +166,11 @@ def lagrange(cuerpo):
             "filas": filas,
         }],
         "pasos": [
+            {"titulo": "Fórmula general de Lagrange", "detalle": "P(x) = Σ y_i·L_i(x);  L_i(x) = Π_(j≠i) (x−x_j)/(x_i−x_j)."},
+            *detalles,
+            {"titulo": "Suma de términos evaluados",
+             "detalle": "P(x) = " + " + ".join(f6(ys[i]*float(filas[i][3])) for i in range(n)) + f" = {f6(suma)}"},
             {"titulo": "Polinomio resultante", "detalle": f"P(x) = {polinomio_texto(coeficientes)}"},
-            {"titulo": "Bases evaluadas", "detalle": "\n".join(detalles)},
         ],
         "aviso": _fuera_de_rango(xs, x),
         "info": "P(x) = Σ y_i · L_i(x); no requiere espaciado uniforme.",

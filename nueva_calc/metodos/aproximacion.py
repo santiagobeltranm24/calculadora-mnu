@@ -81,6 +81,7 @@ def taylor(cuerpo):
     suma = 0.0
     filas = []
     coeficientes = []
+    detalles_terminos = []
 
     for k in range(n + 1):
         if k > 0:
@@ -93,6 +94,12 @@ def taylor(cuerpo):
         er = ea / abs(real) * 100 if real != 0 else None
         filas.append([str(k), f6(dk), f6(coef), f6(termino), f6(suma), f6(ea), f6(er)])
         coeficientes.append(coef)
+        detalles_terminos.append(
+            {"titulo": f"Término de Taylor de orden {k}",
+             "detalle": f"T_{k} = f^({k})({f6(a)})/{k}! · ({f6(x)}−{f6(a)})^{k} "
+                        f"= {f6(dk)}/{math.factorial(k)} · ({f6(x-a)})^{k} "
+                        f"= {f6(termino)}. Suma parcial = {f6(suma)}. Error absoluto = {f6(ea)}."}
+        )
 
     ea_final = abs(real - suma)
     er_final = ea_final / abs(real) * 100 if real != 0 else None
@@ -123,7 +130,12 @@ def taylor(cuerpo):
             "columnas": ["k", "f^(k)(a)", "f^(k)(a) / k!", "término", "P_k(x)", "error absoluto", "error relativo (%)"],
             "filas": filas,
         }],
-        "pasos": [{"titulo": "Polinomio de Taylor", "detalle": f"P_{n}(x) = {polinomio}"}],
+        "pasos": [
+            {"titulo": "Fórmula de Taylor", "detalle": "P_n(x) = Σ_(k=0)^n f^(k)(a)/k! · (x−a)^k."},
+            *detalles_terminos,
+            {"titulo": "Polinomio de Taylor", "detalle": f"P_{n}(x) = {polinomio}"},
+            {"titulo": "Error de aproximación", "detalle": f"|f({f6(x)}) − P_{n}({f6(x)})| = |{f6(real)} − {f6(suma)}| = {f6(ea_final)}."},
+        ],
         "aviso": None,
         "info": "término_k = f^(k)(a) / k! · (x − a)^k; el error es |f(x) − P_k(x)|",
     }

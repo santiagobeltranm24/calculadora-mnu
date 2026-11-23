@@ -79,8 +79,8 @@ def lineal(cuerpo):
     proyeccion = (f"proyección en x = {xp:g}", a + b * xp) if xp is not None else None
     pasos = [
         {"titulo": "Sumas", "detalle": f"n = {n},  Σx = {f6(sx)},  Σy = {f6(sy)},  Σxy = {f6(sxy)},  Σx² = {f6(sxx)}"},
-        {"titulo": "Pendiente", "detalle": f"b = (nΣxy − ΣxΣy) / (nΣx² − (Σx)²) = {f6(b)}"},
-        {"titulo": "Intercepto", "detalle": f"a = ȳ − b·x̄ = {f6(a)}"},
+        {"titulo": "Pendiente (sustitución numérica)", "detalle": f"b = (nΣxy − ΣxΣy) / (nΣx² − (Σx)²) = ({n}·{f6(sxy)} − {f6(sx)}·{f6(sy)}) / ({n}·{f6(sxx)} − ({f6(sx)})²) = {f6(b)}. Se calcula internamente con X centrada para mejorar precisión."},
+        {"titulo": "Intercepto (sustitución numérica)", "detalle": f"a = ȳ − b·x̄ = ({f6(sy)}/{n}) − ({f6(b)})·({f6(sx)}/{n}) = {f6(a)}"},
         {"titulo": "Paso 4. Correlación de Pearson", "detalle": f"r = Σ[(x−x̄)(y−ȳ)] / √{{Σ(x−x̄)²·Σ(y−ȳ)²}} = {f6(r) if r is not None else 'no definida (Y constante)'}"},
         {"titulo": "Paso 5. Evaluación del ajuste", "detalle": f"Se calcula ŷ_i = a + b·x_i, cada residuo e_i = y_i − ŷ_i y la suma de errores al cuadrado SSE = {f6(sse)}. R² = {f6(r2)}."},
     ]
