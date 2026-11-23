@@ -1,0 +1,4 @@
+/* Navegación limpia por temas, manteniendo la estructura del proyecto. */
+.menu__tema-enlace { text-decoration:none; display:block; line-height:1.5; }
+.menu__tema-enlace:hover { color: var(--texto); }
+.hito-bloque { scroll-margin-top: 35px; }

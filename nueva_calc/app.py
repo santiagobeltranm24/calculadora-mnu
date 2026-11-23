@@ -356,9 +356,31 @@ def _construir_hitos():
 HITOS = _construir_hitos()
 
 
+def _construir_temas():
+    """Secciones en el orden histórico de la calculadora, sin rótulos de hitos.
+
+    Solo se unen categorías consecutivas; así nunca se reordenan métodos.
+    """
+    temas = []
+    for h in HITOS:
+        for seccion in h["secciones"]:
+            if temas and temas[-1]["nombre"] == seccion["nombre"]:
+                temas[-1]["items"].extend(seccion["items"])
+            else:
+                temas.append({
+                    "nombre": seccion["nombre"],
+                    "items": list(seccion["items"]),
+                    "ancla": f"tema-{len(temas) + 1}",
+                })
+    return temas
+
+
+TEMAS = _construir_temas()
+
+
 @app.context_processor
 def inyectar_navegacion():
-    return {"hitos": HITOS}
+    return {"temas": TEMAS}
 
 
 def respuesta_api(funcion):

@@ -2,7 +2,7 @@
 {% block titulo %}{{ m.titulo }}{% endblock %}
 
 {% block contenido %}
-<p class="etiqueta">Hito {{ m.hito }} · {{ m.seccion | lower }}</p>
+<p class="etiqueta">{{ m.seccion }}</p>
 <h1>{{ m.titulo }}</h1>
 <p class="descripcion">{{ m.descripcion }}</p>
 {% include "ayuda.html" %}

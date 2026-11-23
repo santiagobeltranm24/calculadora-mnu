@@ -1,14 +1,28 @@
 {% extends "base.html" %}
 
 {% block contenido %}
-<p class="etiqueta">panel principal</p>
-<h1>Elige un método</h1>
+<p class="etiqueta">Calculadora educativa</p>
+<h1>Explora los métodos numéricos</h1>
 <p class="descripcion">
-  Los temas están organizados por hitos. Entra a cada método para ver su
-  tabla de iteraciones o sus pasos y, en el Hito 2, la gráfica en GeoGebra.
+  Métodos ordenados por tema, conservando la secuencia original del curso.
+  Elige un método para consultar su fórmula, resolver ejercicios y seguir su procedimiento paso a paso.
 </p>
-
-{% for h in hitos %}
-{% include "parcial_hito.html" %}
+{% for tema in temas %}
+<section class="hito-bloque" id="{{ tema.ancla }}">
+  <div class="hito-cabecera">
+    <div>
+      <h2 class="hito-nombre">{{ tema.nombre }}</h2>
+      <p class="hito-resumen">Elige un método para comenzar.</p>
+    </div>
+  </div>
+  <div class="rejilla-inicio">
+    {% for item in tema['items'] %}
+    <a href="{{ item.ruta }}" class="tarjeta">
+      <h3>{{ item.titulo }}</h3>
+      <p>{{ item.resumen }}</p>
+    </a>
+    {% endfor %}
+  </div>
+</section>
 {% endfor %}
 {% endblock %}

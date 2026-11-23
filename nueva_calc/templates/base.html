@@ -7,24 +7,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/temas.css') }}">
 </head>
 <body>
-<nav class="menu">
+<nav class="menu" aria-label="Métodos por tema">
   <div class="menu__grupo">
-    <a href="/" class="menu__enlace {{ 'activa' if seccion=='inicio' else '' }}">Inicio</a>
+    <a href="/" class="menu__enlace {{ 'activa' if seccion == 'inicio' else '' }}">Inicio</a>
   </div>
-  {% for h in hitos %}
-  <div class="menu__hito">
-    <a href="{{ h.ruta }}" class="menu__hito-titulo {{ 'activa' if seccion == 'hito' ~ h.numero else '' }}">
-      <span class="menu__hito-num">{{ h.numero }}</span>{{ h.nombre }}
-    </a>
-    {% for sec in h.secciones %}
-    <div class="menu__grupo">
-      <p class="menu__titulo">{{ sec.nombre }}</p>
-      {% for item in sec['items'] %}
-      <a href="{{ item.ruta }}" class="menu__enlace {{ 'activa' if seccion==item.slug else '' }}">{{ item.titulo }}</a>
-      {% endfor %}
-    </div>
+  {% for tema in temas %}
+  <div class="menu__grupo">
+    <a href="/#{{ tema.ancla }}" class="menu__titulo menu__tema-enlace">{{ tema.nombre }}</a>
+    {% for item in tema['items'] %}
+    <a href="{{ item.ruta }}" class="menu__enlace {{ 'activa' if seccion == item.slug else '' }}">{{ item.titulo }}</a>
     {% endfor %}
   </div>
   {% endfor %}

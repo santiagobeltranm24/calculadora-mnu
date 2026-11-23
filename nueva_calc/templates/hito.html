@@ -1,7 +1,8 @@
 {% extends "base.html" %}
-{% block titulo %}{{ hito.nombre }}{% endblock %}
-
+{% block titulo %}Métodos por tema{% endblock %}
 {% block contenido %}
-{% set h = hito %}
-{% include "parcial_hito.html" %}
+<p class="etiqueta">Calculadora educativa</p>
+<h1>Métodos por tema</h1>
+<p class="descripcion">Los métodos están organizados por su tema, conservando el orden en que se incorporaron al curso.</p>
+<p><a class="boton" href="/">Ver todos los métodos por tema</a></p>
 {% endblock %}
