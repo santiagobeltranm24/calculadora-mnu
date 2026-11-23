@@ -1,4 +1,21 @@
 AYUDA = {
+    "newton-sistemas": {
+        "resumen": "Newton-Raphson multivariable para dos ecuaciones F(x,y)=0. Calcula la Jacobiana y resuelve un sistema lineal para obtener el incremento.",
+        "formula": "J(Xk) · Δk = −F(Xk); X(k+1) = Xk + λ·Δk (0 < λ ≤ 1)",
+        "pasos": [
+            "Escribe las dos ecuaciones como expresiones igualadas a cero.",
+            "Deriva parcialmente para formar la matriz Jacobiana.",
+            "Elige el vector inicial X0.",
+            "Evalúa F(Xk) y J(Xk); resuelve J·Δ = −F.",
+            "Calcula X(k+1) = Xk + λΔ; disminuye λ si el residuo empeora.",
+            "Comprueba el residuo máximo ||F(X)|| y compara con la tolerancia.",
+        ],
+        "uso": [
+            "Introduce f1(x,y) y f2(x,y), por ejemplo x**2+y**2-4 y x-y-1.",
+            "Indica x0, y0, tolerancia e iteraciones máximas.",
+            "Pulsa Resolver y navega el tutorial con Anterior/Siguiente.",
+        ],
+    },
     "errores": {
         "resumen": "Mide qué tan lejos está un valor aproximado del real y qué ocurre con ese error cuando pasa por una función. También convierte enteros a otras bases para ver cómo se representan.",
         "formula": "EA = |real − aprox|   ER = EA / |real|   EP = ER · 100   EA_f ≈ |f'(p)| · EA_p",

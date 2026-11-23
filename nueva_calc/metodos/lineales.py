@@ -103,9 +103,16 @@ def jacobi(A, b, x0=None, tol=1e-6, iter_max=50):
         raise ValueError("El vector inicial debe tener n componentes")
 
     tabla = []
+    procedimiento = []
     convergio = False
 
     for paso in range(1, int(iter_max) + 1):
+        if paso <= 20:
+            for i in range(n):
+                terminos = " + ".join(f"({M[i][j]:.6g}·{x[j]:.6g})" for j in range(n) if j != i) or "0"
+                valor = (c[i]-sum(M[i][j]*x[j] for j in range(n) if j != i))/M[i][i]
+                procedimiento.append({"titulo":f"Iteración {paso}, variable x{i+1}",
+                    "detalle":f"x{i+1} = ({c[i]:.6g} − ({terminos})) / {M[i][i]:.6g} = {valor:.9g}"})
         nuevo = [
             (c[i] - sum(M[i][j] * x[j] for j in range(n) if j != i)) / M[i][i]
             for i in range(n)
@@ -124,6 +131,7 @@ def jacobi(A, b, x0=None, tol=1e-6, iter_max=50):
         "solucion": x,
         "iteraciones": len(tabla),
         "tabla": tabla,
+        "pasos": procedimiento,
         "residuo": _residuo(A, b, x),
         "aviso": aviso,
         "info": "x_i^(k+1) = (b_i − Σ_(j≠i) a_ij·x_j^(k)) / a_ii; error = máx|x^(k+1) − x^(k)|",

@@ -809,3 +809,17 @@ table.matriz td.pivote {
 .grafica-leyenda i{width:11px;height:11px;border-radius:50%;display:inline-block}
 .grafica-marco{width:100%;overflow-x:auto}
 .grafica-marco svg{display:block;width:100%;min-width:420px;height:auto}
+
+/* Tutorial interactivo y navegación didáctica */
+.tutorial-guia{border:1px solid rgba(139,92,246,.45);border-radius:16px;padding:18px 20px;margin:20px 0;background:rgba(139,92,246,.12)}
+.tutorial-guia p{color:var(--suave);line-height:1.7;margin-bottom:0}
+.tutorial-activo{margin:20px 0 28px;border:1px solid var(--borde);background:rgba(255,255,255,.045);border-radius:20px;padding:22px}
+.tutorial-cabecera,.tutorial-controles{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.tutorial-cabecera strong{font-family:var(--display);font-size:1rem}
+.tutorial-progreso{font-family:var(--mono);color:var(--cian);font-size:.85rem}
+.tutorial-barra{height:5px;border-radius:999px;background:var(--cristal-fuerte);overflow:hidden;margin:16px 0}
+.tutorial-relleno{height:100%;width:0;background:var(--degradado);border-radius:inherit;transition:width .2s}
+.tutorial-tarjeta{min-height:120px}.tutorial-paso{padding:10px 0 16px;border-bottom:1px solid var(--borde)}.tutorial-paso:last-child{border:0}
+.tutorial-paso h3{font-size:1rem;margin:0 0 12px}.tutorial-paso p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;color:var(--texto);font-family:var(--mono);font-size:.86rem}
+.tutorial-controles button:disabled{opacity:.35;cursor:not-allowed}
+@media(max-width:700px){.tutorial-activo{padding:14px}.tutorial-controles{justify-content:center}.tutorial-tarjeta{min-height:100px}}

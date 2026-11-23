@@ -32,6 +32,8 @@
   <p id="aviso" class="estado estado--aviso"></p>
   <p id="info" class="estado estado--info"></p>
   <div id="resumen" class="dato-simple"></div>
+  <h2>Solución guiada e iteraciones</h2>
+  <div id="tutorial-dinamico"></div>
 
   <div class="tabla-envoltura">
     <table class="tabla">
@@ -54,6 +56,8 @@ const CLAVES = {{ m.columnas | map('first') | list | tojson }};
 const NOMBRE_GGB = {{ m.ggb | tojson }};
 const GRAFICA = {{ m.grafica | tojson }};
 const RUTA = "/api/raices/{{ slug }}";
+const FORMULA = {{ (ayuda.formula if ayuda else m.resumen) | tojson }};
+const TITULO = {{ m.titulo | tojson }};
 
 if (GRAFICA) montarGraficadora("ggb");
 
@@ -104,6 +108,16 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
     <div><span>error final</span><strong>${errorFinal}</strong></div>
   `;
 
+  const pasos = [
+    {titulo:"Fórmula del método",detalle:FORMULA},
+    {titulo:"Datos y función",detalle:Object.entries(cuerpo).map(([k,v])=>k+" = "+v).join("; ")},
+    ...r.tabla.map((fila,i)=>({
+      titulo:"Iteración "+(i+1),
+      detalle:CLAVES.filter(k=>fila[k]!==undefined&&fila[k]!==null).map(k=>k+" = "+formatear(fila[k],k)).join("; ")
+    })),
+    {titulo:"Resultado y verificación",detalle:"Raíz aproximada = "+formatear(r.raiz)+"; error final = "+errorFinal+". "+(r.convergio?"Cumple la tolerancia.":"No cumple la tolerancia solicitada.")}
+  ];
+  crearTutorPasos(document.getElementById("tutorial-dinamico"),pasos);
   if (GRAFICA) graficarFuncion(r.expresion_ggb, r.puntos, NOMBRE_GGB, r.extras);
 });
 </script>

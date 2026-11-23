@@ -45,6 +45,7 @@
   <div id="solucion" class="dato-simple"></div>
   <div id="graficas"></div>
   <h2 style="margin-top:22px">Procedimiento e iteraciones</h2>
+  <div id="tutorial-dinamico"></div>
   <div id="detalle"></div>
 </section>
 {% endblock %}
@@ -54,6 +55,7 @@
 const RUTA = "/api/sistemas/{{ slug }}";
 const ITERATIVO = {{ m.iterativo | tojson }};
 const EJEMPLO = {{ m.ejemplo | tojson }};
+const FORMULA = {{ (ayuda.formula if ayuda else m.resumen) | tojson }};
 
 let datos = { A: EJEMPLO.A.map((f) => f.slice()), b: EJEMPLO.b.slice(), x0: [] };
 
@@ -272,6 +274,13 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
       div.appendChild(h);div.appendChild(p);detalle.appendChild(div);
     });
   }
+  const tutorial=[
+    {titulo:"Fórmula del método",detalle:FORMULA},
+    {titulo:"Sistema inicial",detalle:"A = "+JSON.stringify(A)+"; b = "+JSON.stringify(b)},
+    ...(ITERATIVO?(r.pasos&&r.pasos.length?r.pasos:r.tabla.map(f=>({titulo:"Iteración "+f.n,detalle:"Vector = ("+f.valores.map(v=>formatear(v)).join(", ")+"); error = "+formatear(f.error)}))):(r.pasos||[]).map(v=>({titulo:v.titulo,detalle:v.matriz?JSON.stringify(v.matriz):v.detalle||""}))),
+    {titulo:"Resultado y residuo",detalle:"x = ("+r.solucion.map(v=>formatear(v)).join(", ")+"); residuo máximo = "+formatear(r.residuo)}
+  ];
+  crearTutorPasos(document.getElementById("tutorial-dinamico"),tutorial);
   if (ITERATIVO) renderIteraciones(r.tabla, n, detalle);
   else renderPasos(r.pasos, n, detalle);
 

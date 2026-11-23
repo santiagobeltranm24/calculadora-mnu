@@ -3,7 +3,7 @@ from flask import Flask, jsonify, render_template, request, abort
 from metodos import (
     redondeo, punto_fijo, newton, newton2,
     biseccion, falsa_posicion, secante, lineales,
-    aproximacion, interpolacion, proyecciones, graficas,
+    aproximacion, interpolacion, proyecciones, graficas, no_lineales,
 )
 from metodos.ayuda import AYUDA
 
@@ -144,6 +144,15 @@ SISTEMAS = {
         "funcion": lineales.gauss_seidel,
         "iterativo": True,
         "ejemplo": {"A": [[10, -1, 2], [-1, 11, -1], [2, -1, 10]], "b": [6, 25, -11]},
+    },
+}
+
+SISTEMAS_NO_LINEALES = {
+    "newton-sistemas": {
+        "hito": 4,
+        "titulo": "Newton para sistemas no lineales",
+        "resumen": "Newton-Raphson multivariable con Jacobiana, amortiguación e iteraciones explicadas.",
+        "ruta": "/hito4/newton-sistemas",
     },
 }
 
@@ -336,6 +345,7 @@ def _construir_hitos():
             "secciones": [
                 {"nombre": "Aproximación", "items": _items(GENERICOS, 4, "Aproximación")},
                 {"nombre": "Sistemas lineales", "items": _items(SISTEMAS, 4)},
+                {"nombre": "Sistemas no lineales", "items": _items(SISTEMAS_NO_LINEALES, 4)},
                 {"nombre": "Interpolación", "items": _items(GENERICOS, 4, "Interpolación")},
                 {"nombre": "Proyecciones", "items": _items(GENERICOS, 4, "Proyecciones")},
             ],
@@ -392,6 +402,8 @@ def vista_errores():
 @app.route("/hito<int:numero>/<slug>")
 def vista_metodo(numero, slug):
     ayuda = AYUDA.get(slug)
+    if numero == 4 and slug == "newton-sistemas":
+        return render_template("no_lineales.html", seccion=slug, slug=slug, ayuda=ayuda)
     config = RAICES.get(slug)
     if config is not None and config["hito"] == numero:
         return render_template("raiz.html", seccion=slug, slug=slug, m=config, ayuda=ayuda)
@@ -450,6 +462,12 @@ def api_generico(slug):
                 resultado["graficas"] = []
         return resultado
     return respuesta_api(ejecutar)
+
+
+@app.route("/api/no-lineales/newton", methods=["POST"])
+def api_no_lineales():
+    cuerpo = request.get_json(force=True)
+    return respuesta_api(lambda: no_lineales.resolver(cuerpo))
 
 
 @app.route("/api/base", methods=["POST"])

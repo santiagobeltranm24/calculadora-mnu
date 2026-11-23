@@ -43,6 +43,7 @@
   <p id="info" class="estado estado--info"></p>
   <div id="resultados" class="dato-simple"></div>
   <h2 style="margin-top:22px">Procedimiento paso a paso</h2>
+  <div id="tutorial-dinamico"></div>
   <div id="pasos"></div>
   <div id="tablas"></div>
   <h2 style="margin-top:22px">Representación gráfica</h2>
@@ -54,6 +55,7 @@
 <script>
 const RUTA = "/api/generico/{{ slug }}";
 const DATOS = {{ m.datos | tojson }};
+const FORMULA = {{ (ayuda.formula if ayuda else m.resumen) | tojson }};
 
 function celdaDato(valor) {
   const input = document.createElement("input");
@@ -208,7 +210,14 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
 
   mostrarGraficas(r.graficas, document.getElementById("graficas"));
   r.tablas.forEach((t) => renderTabla(t, tablas));
-  renderPasos(r.pasos, pasos);
+  renderPasos(r.pasos || [], pasos);
+  crearTutorPasos(document.getElementById("tutorial-dinamico"), [
+    {titulo:"Fórmula general",detalle:FORMULA},
+    {titulo:"Datos y parámetros",detalle:Object.entries(cuerpo).map(([k,v])=>k+" = "+(Array.isArray(v)?JSON.stringify(v):v)).join("; ")},
+    ...(r.pasos||[]),
+    {titulo:"Resultados obtenidos",detalle:(r.resultados||[]).map(([k,v])=>k+": "+v).join("; ")},
+    {titulo:"Interpretación",detalle:r.aviso||r.info||"Compara el resultado con la tabla y la gráfica."}
+  ]);
 });
 </script>
 {% endblock %}

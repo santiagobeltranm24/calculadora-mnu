@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block titulo %}Sistemas no lineales · Newton{% endblock %}
+{% block contenido %}
+<p class="etiqueta">Hito 4 · Sistemas no lineales</p>
+<h1>Newton-Raphson para sistemas de 2 ecuaciones</h1>
+<p class="descripcion">Resuelve f₁(x,y)=0 y f₂(x,y)=0 con la matriz Jacobiana. Incluye cada sustitución, el incremento, el factor de amortiguación y el error.</p>
+{% include "ayuda.html" %}
+<section class="bloque">
+  <div class="tutorial-guia">
+    <strong>Guía rápida</strong>
+    <p>1. Escribe las dos funciones igualadas a cero. 2. Elige un punto inicial (x₀,y₀). 3. Calcula. 4. Revisa la Jacobiana, cada iteración y el residuo final.</p>
+  </div>
+  <form id="formulario" class="formulario-linea">
+    <div class="campo campo--ancho"><label for="f1">f₁(x,y) = 0</label><input id="f1" name="f1" type="text" value="x**2 + y**2 - 4" required></div>
+    <div class="campo campo--ancho"><label for="f2">f₂(x,y) = 0</label><input id="f2" name="f2" type="text" value="x - y - 1" required></div>
+    <div class="campo"><label for="x0">x₀</label><input id="x0" name="x0" type="number" step="any" value="1.8" required></div>
+    <div class="campo"><label for="y0">y₀</label><input id="y0" name="y0" type="number" step="any" value="0.8" required></div>
+    <div class="campo"><label for="tol">Tolerancia</label><input id="tol" name="tol" type="number" step="any" value="0.0000001" required></div>
+    <div class="campo"><label for="iter_max">Iteraciones máx.</label><input id="iter_max" name="iter_max" type="number" min="1" max="100" value="30" required></div>
+    <div class="campo campo--boton"><button type="submit" class="boton">Resolver paso a paso</button></div>
+  </form>
+  <div class="controles-fila"><button type="button" class="boton-suave" id="ejemplo">Restablecer ejemplo</button><button type="button" class="boton-suave" id="copiar">Copiar procedimiento</button></div>
+  <p id="estado" class="estado"></p><p id="aviso" class="estado estado--aviso"></p><p id="info" class="estado estado--info"></p>
+  <div id="resultados" class="dato-simple"></div>
+  <h2>Procedimiento guiado</h2><div id="tutorial-dinamico"></div>
+  <h2>Tabla de iteraciones</h2><div class="tabla-envoltura"><table class="tabla"><thead><tr><th>n</th><th>x</th><th>y</th><th>Error</th><th>Residuo</th></tr></thead><tbody id="filas"></tbody></table></div>
+  <h2>Convergencia</h2><div id="graficas"></div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+let ultimoTexto = "";
+document.getElementById("ejemplo").addEventListener("click",()=>{
+  Object.entries({f1:"x**2 + y**2 - 4",f2:"x - y - 1",x0:"1.8",y0:"0.8",tol:"0.0000001",iter_max:"30"}).forEach(([id,v])=>document.getElementById(id).value=v);
+});
+document.getElementById("copiar").addEventListener("click",async ()=>{
+  if (!ultimoTexto)return;
+  await navigator.clipboard.writeText(ultimoTexto);
+  document.getElementById("copiar").textContent="¡Copiado!";
+});
+document.getElementById("formulario").addEventListener("submit",async ev=>{
+  ev.preventDefault();
+  const cuerpo=Object.fromEntries(new FormData(ev.target).entries());
+  const estado=document.getElementById("estado"),aviso=document.getElementById("aviso");
+  const pasos=document.getElementById("tutorial-dinamico"),filas=document.getElementById("filas");
+  const res=document.getElementById("resultados");
+  pasos.replaceChildren();filas.replaceChildren();res.replaceChildren();ultimoTexto="";
+  mostrarGraficas([],document.getElementById("graficas"));
+  mostrarEstado(estado,"info","Calculando...");
+  try {
+    const r=await llamarApi("/api/no-lineales/newton",cuerpo);
+    if (!r.ok){mostrarEstado(estado,"error",r.mensaje);return;}
+    mostrarEstado(estado,r.convergio?"ok":"error",r.convergio?"Convergencia verificada":"No se alcanzó convergencia");
+    aviso.textContent=r.aviso||"";document.getElementById("info").textContent=r.info||"";
+    [["x",r.solucion[0]],["y",r.solucion[1]],["||F(X)||∞",r.residuo],["Iteraciones",r.iteraciones]].forEach(([a,b])=>{
+      const d=document.createElement("div");const k=document.createElement("span");k.textContent=a;
+      const v=document.createElement("strong");v.textContent=formatear(b);d.append(k,v);res.appendChild(d);
+    });
+    const contenido=[
+      {titulo:"Fórmula general",detalle:r.formula},
+      {titulo:"Funciones y Jacobiana simbólica",detalle:"F = ("+r.funciones.join(", ")+"); J = [[" + r.jacobiana.map(f=>f.join(", ")).join("], [")+"]]"},
+      ...r.pasos,
+      {titulo:"Verificación final",detalle:"||F(X)||∞ = "+formatear(r.residuo)+"; "+(r.convergio?"cumple la tolerancia.":"no cumple la tolerancia.")}
+    ];
+    ultimoTexto=contenido.map(p=>p.titulo+"\n"+p.detalle).join("\n\n");
+    if (typeof crearTutorPasos==="function")crearTutorPasos(pasos,contenido);
+    else contenido.forEach(p=>{const d=document.createElement("div");d.className="paso";d.textContent=p.titulo+": "+p.detalle;pasos.appendChild(d);});
+    r.tabla.forEach(f=>{const tr=document.createElement("tr");[f.n,f.x,f.y,f.error,f.residuo].forEach(v=>{const td=document.createElement("td");td.textContent=formatear(v);tr.appendChild(td);});filas.appendChild(tr);});
+    mostrarGraficas([{titulo:"Disminución del residuo",eje_x:"Iteración",eje_y:"||F(X)||∞",series:[{nombre:"Residuo",tipo:"linea",puntos:r.tabla.map(f=>[f.n,f.residuo])}]}],document.getElementById("graficas"));
+  }catch(e){mostrarEstado(estado,"error","Error de conexión: "+e.message);}
+});
+</script>
+{% endblock %}
