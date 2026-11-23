@@ -2,6 +2,14 @@
 
 Aplicación web académica para explorar y ejecutar métodos numéricos. El proyecto reúne explicaciones, formularios interactivos, tablas de iteraciones y resultados para el estudio de análisis numérico.
 
+## Descargar la calculadora
+
+Puedes descargar el proyecto completo en formato ZIP desde este enlace:
+
+[**Descargar calculadora-mnu (.zip)**](https://github.com/santiagobeltranm24/calculadora-mnu/archive/refs/heads/main.zip)
+
+Después de descomprimirlo, sigue los pasos de [Ejecución local](#ejecución-local) para instalar las dependencias e iniciar la aplicación en tu computadora.
+
 ## Funcionalidades
 
 ### Hito 2 — Aproximación y raíces
