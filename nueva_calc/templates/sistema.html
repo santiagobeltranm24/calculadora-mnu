@@ -316,7 +316,7 @@ document.getElementById("formulario").addEventListener("submit", async (e) => {
     filas:r.tabla.map(f=>[f.n,...f.valores,f.error])}]:[];
   const graficasPDF=(ITERATIVO&&r.tabla)?[
     {titulo:"Error por iteración",eje_x:"Iteración",eje_y:"Error",
-      series:[{nombre:"Error",tipo:"linea",puntos:r.tabla.map(f=>[f.n,f.error])}]}},
+      series:[{nombre:"Error",tipo:"linea",puntos:r.tabla.map(f=>[f.n,f.error])}]},
     {titulo:"Evolución de incógnitas",eje_x:"Iteración",eje_y:"Valor",
       series:Array.from({length:n},(_,j)=>({nombre:"x"+(j+1),tipo:"linea",puntos:r.tabla.map(f=>[f.n,f.valores[j]])}))}
   ]:[];
