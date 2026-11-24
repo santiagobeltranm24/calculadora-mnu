@@ -122,8 +122,22 @@ class TestCalculadora(unittest.TestCase):
         nombres=[tema["nombre"] for tema in TEMAS]
         self.assertEqual(nombres, [
             "Aproximación", "Raíces de ecuaciones", "Sistemas lineales",
-            "Sistemas no lineales", "Interpolación", "Proyecciones",
+            "Aproximación", "Sistemas lineales", "Sistemas no lineales",
+            "Interpolación", "Proyecciones",
         ])
+        # Contrato: preservar la secuencia histórica Hito 2 → Hito 3 → Hito 4,
+        # pero sin mostrar nombres de hitos en la interfaz.
+        orden_esperado = [
+            "errores", "punto-fijo", "newton", "newton-segundo-orden",
+            "biseccion", "falsa-posicion", "secante",
+            "gauss", "gauss-jordan", "jacobi",
+            "redondeo-truncamiento", "taylor", "gauss-seidel",
+            "newton-sistemas", "interpolacion-lineal", "newton-adelante",
+            "lagrange", "diferencias-divididas",
+            "regresion-lineal", "regresion-exponencial",
+            "regresion-potencial", "regresion-cuadratica", "series-de-tiempo",
+        ]
+        self.assertEqual([item["slug"] for tema in TEMAS for item in tema["items"]],orden_esperado)
         vistas=self.client.get("/")
         self.assertEqual(vistas.status_code, 200)
         html=vistas.get_data(as_text=True)
@@ -131,7 +145,7 @@ class TestCalculadora(unittest.TestCase):
         self.assertIn('data-filtro="todos"', html)
         self.assertIn("css/academico.css", html)
         self.assertIn("js/academico.js", html)
-        self.assertEqual(html.count('class="tema-seccion"'), 6)
+        self.assertEqual(html.count('class="tema-seccion"'), 8)
         slugs=[]
         for tema in TEMAS:
             for item in tema["items"]:
