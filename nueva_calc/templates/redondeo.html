@@ -2,7 +2,8 @@
 {% block titulo %}Errores de redondeo{% endblock %}
 
 {% block contenido %}
-<p class="etiqueta">Hito 2 · aproximación</p>
+<nav class="migas" aria-label="Ruta de navegación"><a href="/">Inicio</a><span aria-hidden="true">›</span><span>Aproximación</span></nav>
+<p class="etiqueta">Aproximación</p>
 <h1>Errores de redondeo</h1>
 <p class="descripcion">
   Conversión de un entero decimal a otra base, cálculo de error entre
@@ -10,8 +11,9 @@
   evaluar una función.
 </p>
 {% include "ayuda.html" %}
+<nav class="metodo-navegacion" aria-label="Secciones del método"><a href="#seccion-base"><span aria-hidden="true">⇢</span>Conversión</a><a href="#seccion-comparar"><span aria-hidden="true">≈</span>Comparación</a><a href="#seccion-funcion"><span aria-hidden="true">ƒ</span>Propagación</a></nav>
 
-<section class="bloque">
+<section class="bloque" id="seccion-base">
   <h3>Conversión de base</h3>
   <p class="nota">Divisiones sucesivas: el residuo de cada división es el dígito en la nueva base.</p>
   <form id="f-base">
@@ -29,7 +31,7 @@
   <div id="res-base" class="dato-simple"></div>
 </section>
 
-<section class="bloque">
+<section class="bloque" id="seccion-comparar">
   <h3>Comparación de valores</h3>
   <p class="nota">EA = |real − aprox|, ER = EA / |real|, EP = ER × 100.</p>
   <form id="f-comparar">
@@ -47,7 +49,7 @@
   <div id="res-comparar" class="dato-simple"></div>
 </section>
 
-<section class="bloque">
+<section class="bloque" id="seccion-funcion">
   <h3>Error propagado en f(x)</h3>
   <p class="nota">Aplica la misma teoría a f(p) contra f(p*), y estima EA_f(p) ≈ |f'(p)| · EA_p.</p>
   <form id="f-funcion">

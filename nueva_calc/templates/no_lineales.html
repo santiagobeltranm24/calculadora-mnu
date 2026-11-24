@@ -1,11 +1,16 @@
 {% extends "base.html" %}
 {% block titulo %}Sistemas no lineales · Newton{% endblock %}
 {% block contenido %}
+<nav class="migas" aria-label="Ruta de navegación"><a href="/">Inicio</a><span aria-hidden="true">›</span><span>Sistemas no lineales</span></nav>
 <p class="etiqueta">Sistemas no lineales</p>
 <h1>Newton-Raphson para sistemas de 2 ecuaciones</h1>
 <p class="descripcion">Resuelve f₁(x,y)=0 y f₂(x,y)=0 con la matriz Jacobiana. Incluye cada sustitución, el incremento, el factor de amortiguación y el error.</p>
 {% include "ayuda.html" %}
-<section class="bloque">
+<nav class="metodo-navegacion" aria-label="Secciones del método"><a href="#seccion-entradas"><span aria-hidden="true">✎</span>Entradas</a><a href="#seccion-resultados"><span aria-hidden="true">✓</span>Resultados</a><a href="#seccion-procedimiento"><span aria-hidden="true">☷</span>Procedimiento</a><a href="#seccion-tablas"><span aria-hidden="true">▦</span>Iteraciones</a><a href="#seccion-graficas"><span aria-hidden="true">⌁</span>Convergencia</a></nav>
+<section class="bloque bloque--academico">
+  <div class="metodo-grid">
+  <section class="panel-captura" id="seccion-entradas">
+    <div class="panel-identificador"><span class="panel-icono" aria-hidden="true">∑</span><h2>Sistema de ecuaciones</h2></div>
   <div class="tutorial-guia">
     <strong>Guía rápida</strong>
     <p>1. Escribe las dos funciones igualadas a cero. 2. Elige un punto inicial (x₀,y₀). 3. Calcula. 4. Revisa la Jacobiana, cada iteración y el residuo final.</p>
@@ -20,12 +25,17 @@
     <div class="campo campo--boton"><button type="submit" class="boton">Resolver paso a paso</button></div>
   </form>
   <div class="controles-fila"><button type="button" class="boton-suave" id="ejemplo">Restablecer ejemplo</button><button type="button" class="boton-suave" id="copiar">Copiar procedimiento</button></div>
+  </section>
+  <section class="panel-respuesta" id="seccion-resultados">
+    <div class="panel-identificador"><span class="panel-icono" aria-hidden="true">✓</span><h2>Resultados</h2></div>
   <p id="estado" class="estado"></p><p id="aviso" class="estado estado--aviso"></p><p id="info" class="estado estado--info"></p>
   <div id="resultados" class="dato-simple"></div>
   <div class="acciones-reporte"><button type="button" id="descargar-pdf" class="boton-suave" disabled>Descargar procedimiento PDF</button></div>
-  <h2>Procedimiento guiado</h2><div id="tutorial-dinamico"></div>
-  <h2>Tabla de iteraciones</h2><div class="tabla-envoltura"><table class="tabla"><thead><tr><th>n</th><th>x</th><th>y</th><th>Error</th><th>Residuo</th></tr></thead><tbody id="filas"></tbody></table></div>
-  <h2>Convergencia</h2><div id="graficas"></div>
+  <section class="panel-procedimiento" id="seccion-procedimiento"><h2>Procedimiento guiado</h2><div id="tutorial-dinamico"></div></section>
+  </section></div>
+  <section class="panel-detalle" id="seccion-tablas">
+  <h2>Tabla de iteraciones</h2><div class="tabla-envoltura"><table class="tabla"><thead><tr><th>n</th><th>x</th><th>y</th><th>Error</th><th>Residuo</th></tr></thead><tbody id="filas"></tbody></table></div></section>
+  <section class="panel-detalle" id="seccion-graficas"><h2>Convergencia</h2><div id="graficas"></div></section>
 </section>
 {% endblock %}
 {% block scripts %}
