@@ -2,7 +2,7 @@
 (function(){
 "use strict";
 const NS="http://www.w3.org/2000/svg";
-const COLORES=["#a78bfa","#22d3ee","#fbbf24","#fb7185","#4ade80","#f472b6"];
+const COLORES=["#2563eb","#0891b2","#d97706","#a855f7","#16a34a","#e11d48"];
 function elemento(tag,props={},parent){
  const el=document.createElementNS(NS,tag);
  Object.entries(props).forEach(([k,v])=>el.setAttribute(k,String(v)));
@@ -10,7 +10,7 @@ function elemento(tag,props={},parent){
  return el;
 }
 function texto(parent,x,y,value,props={}){
- const el=elemento("text",{x,y,fill:"#a7a5bf","font-size":12,"font-family":"Inter, sans-serif",...props},parent);
+ const el=elemento("text",{x,y,fill:"#64748b","font-size":12,"font-family":"Inter, sans-serif",...props},parent);
  el.textContent=value;return el;
 }
 function num(n){
@@ -60,12 +60,12 @@ function grafica(g,host){
    group.replaceChildren();
    for(let i=0;i<=5;i++){
      const yy=T+i*(H-T-B)/5,xx=L+i*(W-L-R)/5;
-     elemento("line",{x1:L,y1:yy,x2:W-R,y2:yy,stroke:"#fff","stroke-opacity":".11"},group);
+     elemento("line",{x1:L,y1:yy,x2:W-R,y2:yy,stroke:"#cbd5e1","stroke-opacity":".65"},group);
      texto(group,L-10,yy+4,num(vista.ymax-i/5*(vista.ymax-vista.ymin)),{"text-anchor":"end"});
-     elemento("line",{x1:xx,y1:T,x2:xx,y2:H-B,stroke:"#fff","stroke-opacity":".09"},group);
+     elemento("line",{x1:xx,y1:T,x2:xx,y2:H-B,stroke:"#cbd5e1","stroke-opacity":".55"},group);
      texto(group,xx,H-B+23,num(vista.xmin+i/5*(vista.xmax-vista.xmin)),{"text-anchor":"middle"});
    }
-   elemento("rect",{x:L,y:T,width:W-L-R,height:H-T-B,fill:"none",stroke:"#fff","stroke-opacity":".24"},group);
+   elemento("rect",{x:L,y:T,width:W-L-R,height:H-T-B,fill:"none",stroke:"#94a3b8","stroke-opacity":".55"},group);
    const defs=elemento("defs",{},group);
    const clip=elemento("clipPath",{id:"grafclip-"+identificador},defs);
    elemento("rect",{x:L,y:T,width:W-L-R,height:H-T-B},clip);
@@ -76,7 +76,7 @@ function grafica(g,host){
        elemento("polyline",{points:s.puntos.map(p=>escX(p[0]).toFixed(2)+","+escY(p[1]).toFixed(2)).join(" "),fill:"none",stroke:color,"stroke-width":2.5,"stroke-linecap":"round","stroke-linejoin":"round"},curvas);
      if(s.tipo==="puntos"||s.puntos.length<30)
        s.puntos.forEach(p=>{
-         const c=elemento("circle",{cx:escX(p[0]),cy:escY(p[1]),r:s.tipo==="puntos"?5:3,fill:color,stroke:"#171328","stroke-width":1},curvas);
+         const c=elemento("circle",{cx:escX(p[0]),cy:escY(p[1]),r:s.tipo==="puntos"?5:3,fill:color,stroke:"#fff","stroke-width":1},curvas);
          elemento("title",{},c).textContent=s.nombre+": ("+num(p[0])+", "+num(p[1])+")";
        });
    });

@@ -105,7 +105,7 @@ class TestCalculadora(unittest.TestCase):
         self.assertEqual(data["filas"],[[1.,2.],[2.,4.]])
 
     def test_javascript_en_paginas_generadas(self):
-        rutas=["/hito2/newton","/hito2/punto-fijo","/hito3/biseccion",
+        rutas=["/","/hito2/newton","/hito2/punto-fijo","/hito3/biseccion",
                "/hito3/gauss","/hito4/gauss-seidel","/hito4/lagrange",
                "/hito4/series-de-tiempo","/hito4/newton-sistemas"]
         for ruta in rutas:
@@ -116,6 +116,37 @@ class TestCalculadora(unittest.TestCase):
                 with self.subTest(ruta=ruta):
                     p=subprocess.run(["node","--check","-"],input=script,text=True,capture_output=True)
                     self.assertEqual(p.returncode,0,p.stderr)
+
+    def test_redisenio_academico_todos_los_metodos(self):
+        from app import TEMAS
+        nombres=[tema["nombre"] for tema in TEMAS]
+        self.assertEqual(nombres, [
+            "Aproximación", "Raíces de ecuaciones", "Sistemas lineales",
+            "Sistemas no lineales", "Interpolación", "Proyecciones",
+        ])
+        vistas=self.client.get("/")
+        self.assertEqual(vistas.status_code, 200)
+        html=vistas.get_data(as_text=True)
+        self.assertIn('id="buscar-metodos"', html)
+        self.assertIn('data-filtro="todos"', html)
+        self.assertIn("css/academico.css", html)
+        self.assertIn("js/academico.js", html)
+        self.assertEqual(html.count('class="tema-seccion"'), 6)
+        slugs=[]
+        for tema in TEMAS:
+            for item in tema["items"]:
+                slugs.append(item["slug"])
+                with self.subTest(metodo=item["titulo"]):
+                    respuesta=self.client.get(item["ruta"])
+                    self.assertEqual(respuesta.status_code,200)
+                    pagina=respuesta.get_data(as_text=True)
+                    self.assertIn('id="menu-lateral"', pagina)
+                    self.assertIn("metodo-navegacion",pagina if item["slug"]!="errores" else pagina)
+                    self.assertIn("css/academico.css",pagina)
+        self.assertEqual(len(slugs),len(set(slugs)))
+        estilo=self.client.get("/static/css/academico.css")
+        self.assertEqual(estilo.status_code,200)
+        self.assertIn(b"#2563eb",estilo.data)
 
     def test_pdf_exporta_procedimientos_y_graficas(self):
         payload={"titulo":"Newton y regresión","formula":"x(n+1)=x(n)-f/f'",

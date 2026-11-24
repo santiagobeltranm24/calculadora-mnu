@@ -30,3 +30,4 @@ jobs:
           node --check static/js/nucleo.js
           node --check static/js/tutorial.js
           node --check static/js/procedimientos.js
+          node --check static/js/academico.js
