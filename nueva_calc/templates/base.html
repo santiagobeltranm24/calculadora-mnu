@@ -3,34 +3,57 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% block titulo %}Métodos numéricos{% endblock %}</title>
+<meta name="theme-color" content="#ffffff">
+<title>{% block titulo %}Métodos numéricos{% endblock %} · Calculadora educativa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/estilo.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/temas.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/academico.css') }}">
 </head>
 <body>
-<nav class="menu" aria-label="Métodos por tema">
-  <div class="menu__grupo">
-    <a href="/" class="menu__enlace {{ 'activa' if seccion == 'inicio' else '' }}">Inicio</a>
+<a class="enlace-saltar" href="#contenido">Saltar al contenido</a>
+<header class="app-cabecera">
+  <div class="cabecera-marca">
+    <button type="button" class="boton-menu" id="boton-menu" aria-label="Abrir menú de temas" aria-controls="menu-lateral" aria-expanded="false">☰</button>
+    <a class="marca" href="/" aria-label="Métodos Numéricos, ir al inicio">
+      <span class="marca-icono" aria-hidden="true">∑</span><span class="marca-texto">Métodos <strong>Numéricos</strong></span>
+    </a>
   </div>
-  {% for tema in temas %}
-  <div class="menu__grupo">
-    <a href="/#{{ tema.ancla }}" class="menu__titulo menu__tema-enlace">{{ tema.nombre }}</a>
-    {% for item in tema['items'] %}
-    <a href="{{ item.ruta }}" class="menu__enlace {{ 'activa' if seccion == item.slug else '' }}">{{ item.titulo }}</a>
+  <div class="cabecera-centro">Calculadora de Métodos Numéricos</div>
+  <span class="cabecera-descripcion">✧ Herramienta de aprendizaje</span>
+</header>
+<div class="estructura-app">
+  <nav class="menu" id="menu-lateral" aria-label="Navegación por temas">
+    <a href="/" class="menu__enlace menu__inicio {{ 'activa' if seccion=='inicio' else '' }}"><span aria-hidden="true">⌂</span> Inicio</a>
+    <p class="menu__separador">CONTENIDO</p>
+    {% for tema in temas %}
+    <details class="menu__tema" {% if seccion in tema.slugs or (seccion=='inicio' and loop.index <= 2) %}open{% endif %}>
+      <summary class="menu__tema-resumen">
+        <span class="menu__tema-icono" aria-hidden="true">{{ {'Aproximación':'≈', 'Raíces de ecuaciones':'ƒ', 'Sistemas lineales':'▦', 'Sistemas no lineales':'∑', 'Interpolación':'⌁', 'Proyecciones':'↗'}.get(tema.nombre, '•') }}</span>
+        <span>{{ tema.nombre }}</span><span class="menu__chevron" aria-hidden="true">⌄</span>
+      </summary>
+      <div class="menu__metodos">
+        {% for item in tema['items'] %}
+        <a href="{{ item.ruta }}" class="menu__enlace {{ 'activa' if seccion==item.slug else '' }}" {% if seccion==item.slug %}aria-current="page"{% endif %}>{{ item.titulo }}</a>
+        {% endfor %}
+      </div>
+    </details>
     {% endfor %}
-  </div>
-  {% endfor %}
-</nav>
-<main class="principal">
-  {% block contenido %}{% endblock %}
-</main>
+    <div class="menu__pie">Aprende · Calcula · Comprueba</div>
+  </nav>
+  <button type="button" class="fondo-menu" id="fondo-menu" aria-label="Cerrar menú"></button>
+  <main class="principal" id="contenido">
+    {% block contenido %}{% endblock %}
+    <footer class="pie-pagina">Calculadora de Métodos Numéricos · Aprendizaje paso a paso</footer>
+  </main>
+</div>
 {% block librerias %}{% endblock %}
 <script src="{{ url_for('static', filename='js/nucleo.js') }}"></script>
 <script src="{{ url_for('static', filename='js/graficas.js') }}"></script>
 <script src="{{ url_for('static', filename='js/tutorial.js') }}"></script>
 <script src="{{ url_for('static', filename='js/procedimientos.js') }}"></script>
+<script src="{{ url_for('static', filename='js/academico.js') }}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

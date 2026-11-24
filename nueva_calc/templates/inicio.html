@@ -1,28 +1,44 @@
 {% extends "base.html" %}
-
+{% block titulo %}Explorar métodos{% endblock %}
 {% block contenido %}
-<p class="etiqueta">Calculadora educativa</p>
+<p class="etiqueta">Plataforma educativa · Métodos numéricos</p>
 <h1>Explora los métodos numéricos</h1>
-<p class="descripcion">
-  Métodos ordenados por tema, conservando la secuencia original del curso.
-  Elige un método para consultar su fórmula, resolver ejercicios y seguir su procedimiento paso a paso.
-</p>
+<p class="descripcion">Resuelve problemas, comprende cada fórmula y sigue el procedimiento paso a paso. Todos tus métodos están organizados por tema.</p>
+<section class="busqueda-panel" aria-label="Buscar y filtrar métodos">
+  <label class="busqueda-etiqueta" for="buscar-metodos">Encuentra un método</label>
+  <div class="busqueda-caja"><span aria-hidden="true">⌕</span><input type="search" id="buscar-metodos" placeholder="Buscar método o tema..." autocomplete="off"></div>
+  <div class="filtros-inicio" role="group" aria-label="Filtrar por tema">
+    <button type="button" class="filtro-tema seleccionado" data-filtro="todos" aria-pressed="true">Todos</button>
+    {% for tema in temas %}<button type="button" class="filtro-tema" data-filtro="{{ tema.ancla }}" aria-pressed="false">{{ tema.nombre }}</button>{% endfor %}
+  </div>
+  <p id="contador-metodos" class="contador-metodos" aria-live="polite">Explora los métodos disponibles.</p>
+</section>
+<div id="catalogo-metodos">
 {% for tema in temas %}
-<section class="hito-bloque" id="{{ tema.ancla }}">
-  <div class="hito-cabecera">
-    <div>
-      <h2 class="hito-nombre">{{ tema.nombre }}</h2>
-      <p class="hito-resumen">Elige un método para comenzar.</p>
-    </div>
+<section class="tema-seccion" id="{{ tema.ancla }}" data-tema="{{ tema.ancla }}">
+  <div class="tema-encabezado">
+    <div class="tema-identidad"><span class="tema-identidad-icono" aria-hidden="true">{{ {'Aproximación':'≈', 'Raíces de ecuaciones':'ƒ', 'Sistemas lineales':'▦', 'Sistemas no lineales':'∑', 'Interpolación':'⌁', 'Proyecciones':'↗'}.get(tema.nombre,'•') }}</span><div><p class="tema-etiqueta">TEMA {{ loop.index }}</p><h2>{{ tema.nombre }}</h2></div></div>
+    <span class="tema-cantidad">{{ tema['items']|length }} métodos</span>
   </div>
   <div class="rejilla-inicio">
     {% for item in tema['items'] %}
-    <a href="{{ item.ruta }}" class="tarjeta">
-      <h3>{{ item.titulo }}</h3>
-      <p>{{ item.resumen }}</p>
+    <a href="{{ item.ruta }}" class="tarjeta metodo-tarjeta" data-busqueda="{{ (tema.nombre ~ ' ' ~ item.titulo ~ ' ' ~ item.resumen)|lower }}" data-tema="{{ tema.ancla }}">
+      <span class="tarjeta-cabecera"><span class="tarjeta-icono" aria-hidden="true">{{ {'Aproximación':'≈', 'Raíces de ecuaciones':'ƒ', 'Sistemas lineales':'▦', 'Sistemas no lineales':'∑', 'Interpolación':'⌁', 'Proyecciones':'↗'}.get(tema.nombre,'•') }}</span><span class="tarjeta-flecha" aria-hidden="true">↗</span></span>
+      <h3>{{ item.titulo }}</h3><p>{{ item.resumen }}</p>
     </a>
     {% endfor %}
   </div>
 </section>
 {% endfor %}
+</div>
+<div id="sin-resultados" class="sin-resultados" hidden><strong>No encontramos ese método.</strong><p>Prueba con otra palabra o selecciona «Todos».</p></div>
+<section class="resumen-funciones" aria-label="Funciones disponibles">
+  <div class="funciones-titulo"><p class="tema-etiqueta">LO QUE PUEDES HACER</p><h2>Aprende con cada cálculo</h2></div>
+  <div class="funciones-rejilla">
+    <div><span aria-hidden="true">☷</span><strong>Tutorial guiado</strong><p>Fórmulas, sustituciones e iteraciones</p></div>
+    <div><span aria-hidden="true">⌁</span><strong>Gráficas interactivas</strong><p>Zoom, desplazamiento y coordenadas</p></div>
+    <div><span aria-hidden="true">⇧</span><strong>Importación</strong><p>Tablas desde CSV y Excel</p></div>
+    <div><span aria-hidden="true">⇩</span><strong>Reportes PDF</strong><p>Resultados, pasos y gráficas</p></div>
+  </div>
+</section>
 {% endblock %}

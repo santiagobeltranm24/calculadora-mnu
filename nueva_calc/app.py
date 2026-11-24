@@ -357,21 +357,19 @@ HITOS = _construir_hitos()
 
 
 def _construir_temas():
-    """Secciones en el orden histórico de la calculadora, sin rótulos de hitos.
-
-    Solo se unen categorías consecutivas; así nunca se reordenan métodos.
-    """
+    """Seis temas en orden de primera aparición, con los métodos de cada tema en su orden original."""
     temas = []
+    conocidos = {}
     for h in HITOS:
         for seccion in h["secciones"]:
-            if temas and temas[-1]["nombre"] == seccion["nombre"]:
-                temas[-1]["items"].extend(seccion["items"])
-            else:
-                temas.append({
-                    "nombre": seccion["nombre"],
-                    "items": list(seccion["items"]),
-                    "ancla": f"tema-{len(temas) + 1}",
-                })
+            nombre = seccion["nombre"]
+            if nombre not in conocidos:
+                tema = {"nombre": nombre, "items": [], "ancla": f"tema-{len(temas) + 1}"}
+                temas.append(tema)
+                conocidos[nombre] = tema
+            conocidos[nombre]["items"].extend(seccion["items"])
+    for tema in temas:
+        tema["slugs"] = [item["slug"] for item in tema["items"]]
     return temas
 
 
